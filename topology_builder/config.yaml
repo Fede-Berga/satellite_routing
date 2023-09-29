@@ -1,0 +1,38 @@
+name : 'Iridium'
+constellation_file : './constellations/Iridium_TLE.txt'
+ground_stations :
+  - name : 'Tokyo'
+    lat : 35.652832
+    lon : 139.839478
+  #- name : 'Delhi'
+  #  lat : 28.644800
+  #  lon : 77.216721
+  - name : 'Melbourne'
+    lat : -37.840935
+    lon : 144.946457
+  - name : 'London'
+    lat : 51.509865
+    lon : -0.118092
+  - name : 'Sao Paulo'
+    lat : -23.533773
+    lon : -46.625290
+  #- name : 'Mexico City'
+  #  lat : 19.432608
+  #  lon : -99.133209
+  #- name : 'Cairo'
+  #  lat : 30.033333
+  #  lon : 31.233334
+  #- name : 'New York'
+  #  lat : 40.730610
+  #  lon : -73.935242
+  #- name : 'Cape Town'
+  #  lat : -33.918861
+  #  lon : 18.423300
+  
+output_file : './results/iridium_static_status.json'
+t : "2023-09-01 13:20:30 +00:00"
+start_time : "2023-09-01 10:00:00 +00:00"
+end_time : "2023-09-01 11:00:00 +00:00"
+dt : 1000
+
+
