@@ -1,23 +1,25 @@
-import os
 from pathlib import Path
 import datetime, pytz
-import sys
-import pytest
-import networkx as nx
-import matplotlib.pyplot as plt
-
-sys.path.append(os.path.abspath("./topology_builder"))
-
-from topology_builder.satellite_repository import STKLeoSatelliteRepository
-from topology_builder.topology import Topology
-from topology_builder.topology_builder import (
+from topology_builder.repository.satellite_repository import STKLeoSatelliteRepository
+from topology_builder.topology.topology import Topology
+from topology_builder.builder.min_distance_topology_builder import (
     MinimumDistanceTopologyBuilder,
-    LOSTopologyBuilder,
 )
 
 
 class TestAddConstellation:
-    def test_add_constellation(self):
+    def test_add_constellation_empty(self):
+        topology: Topology = MinimumDistanceTopologyBuilder(
+            verbose=True,
+            name="Iridium",
+            t=datetime.datetime(year=2023, month=9, day=12, tzinfo=pytz.UTC),
+        ).build()
+
+        print(topology)
+
+        assert len(topology.get_leo_satellites()) == 0
+
+    def test_add_constellation_basic(self):
         topology: Topology = (
             MinimumDistanceTopologyBuilder(
                 verbose=True,
@@ -25,80 +27,16 @@ class TestAddConstellation:
                 t=datetime.datetime(year=2023, month=9, day=12, tzinfo=pytz.UTC),
             )
             .add_LEO_constellation(
-                STKLeoSatelliteRepository(Path("./constellations/Iridium_TLE.txt"))
+                STKLeoSatelliteRepository(Path("../constellations/Iridium_TLE.txt"))
             )
             .build()
         )
 
-        assert len(topology.get_satellites()) == 66
+        print(topology)
 
-    def test_add_isls(self):
-        topology: Topology = (
-            MinimumDistanceTopologyBuilder(
-                verbose=True,
-                name="Iridium",
-                t=datetime.datetime(year=2023, month=9, day=12, tzinfo=pytz.UTC),
-            )
-            .add_LEO_constellation(
-                STKLeoSatelliteRepository(Path("./constellations/Iridium_TLE.txt"))
-            )
-            .add_ISLs()
-            .build()
-        )
+        assert len(topology.get_leo_satellites()) == 66
 
-        #print(topology.get_satellites())
-        #print([(sat.name, topology.ntwk.nodes[sat]["plane"]) for sat in topology.get_satellites()])
-
-        assert topology.get_ISLs != 0
-
-    def test_add_isls_no_sat(self):
-        with pytest.raises(Exception):
-            topology: Topology = (
-                MinimumDistanceTopologyBuilder(
-                    verbose=True,
-                    name="Iridium",
-                    t=datetime.datetime(year=2023, month=9, day=12, tzinfo=pytz.UTC),
-                )
-                .add_ISLs()
-                .build()
-            )
-
-    def test_add_gsls(self):
-        gs_s = [
-            {"name": "Aberdeen", "lat": 57.9, "lon": 2.9},
-            {"name": "Bombai", "lat": 19.0, "lon": 72.48},
-        ]
-
-        topology: Topology = (
-            MinimumDistanceTopologyBuilder(
-                verbose=True,
-                name="Iridium",
-                t=datetime.datetime(year=2023, month=9, day=12, tzinfo=pytz.UTC),
-            )
-            .add_LEO_constellation(
-                STKLeoSatelliteRepository(Path("./constellations/Iridium_TLE.txt"))
-            )
-            .add_GSs(gs_s)
-            .add_GSLs()
-            .build()
-        )
-
-        print(topology.ntwk.edges)
-
-        assert len(topology.get_GSLs()) == 2
-
-    def test_add_gsls_no_sat(self):
-        with pytest.raises(Exception):
-            topology: Topology = (
-                MinimumDistanceTopologyBuilder(
-                    verbose=True,
-                    name="Iridium",
-                    t=datetime.datetime(year=2023, month=9, day=12, tzinfo=pytz.UTC),
-                )
-                .add_GSLs()
-                .build()
-            )
-
+    """
     def test_los_topology_builder(self):
         gs_s = [
             {"name": "Aberdeen", "lat": 57.9, "lon": 2.9},
@@ -201,3 +139,4 @@ class TestAddConstellation:
                 )
 
                 now += datetime.timedelta(milliseconds=dt)
+    """

@@ -12,7 +12,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 sys.path.append(os.path.abspath("./"))
-from topology_builder.satellite_repository import STKLeoSatelliteRepository
+from topology_builder.topology_builder.repository.satellite_repository import STKLeoSatelliteRepository
 from topology_builder.topology_builder import (
     MinimumDistanceTopologyBuilder,
     LOSTopologyBuilder,

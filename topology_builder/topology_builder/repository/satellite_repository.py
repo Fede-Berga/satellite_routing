@@ -1,6 +1,8 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 from skyfield.api import load, EarthSatellite
+from topology_builder.node_types import NodeTypes
+
 
 class SatelliteRepository:
     def __init__(self) -> None:
@@ -20,10 +22,12 @@ class LeoSatelliteRepository(SatelliteRepository):
 
 class STKLeoSatelliteRepository(LeoSatelliteRepository):
     def __init__(self, file: Path) -> None:
+        if not file.exists(): 
+            raise Exception(f"{file} does not exist")
         super().__init__()
         self.file: Path = file
 
-    def _get_satellite_name_plane_pos_in_plane(
+    def _get_sat_info(
         self, names: str
     ) -> List[Dict[str, Any]]:
         """
@@ -48,12 +52,12 @@ class STKLeoSatelliteRepository(LeoSatelliteRepository):
             for i in range(66)
         ]
 
-    def get_constellation(self) -> Dict[str, Any]:
+    def get_constellation(self) -> List[Tuple[str, Dict[str, Any]]]:
         with open(self.file, "r") as file:
             file.readline()  # First line is useless
 
             # Get names and positions
-            sat_from_file = self._get_satellite_name_plane_pos_in_plane(file.readline())
+            sat_from_file = self._get_sat_info(file.readline())
 
             [file.readline() for _ in range(2)]  # Third and fourth lines are useless
 
@@ -65,13 +69,17 @@ class STKLeoSatelliteRepository(LeoSatelliteRepository):
                 line_2 = file.readline().strip()
 
                 satellites.append(
-                    {
-                        "satellite": EarthSatellite(
-                            line_1, line_2, sat_info["name"], load.timescale()
-                        ),
-                        "plane": sat_info["plane"],
-                        "position_in_plane": sat_info["position_in_plane"],
-                    }
+                    (
+                        sat_info["name"],
+                        {
+                            "skyfield_obj": EarthSatellite(
+                                line_1, line_2, sat_info["name"], load.timescale()
+                            ),
+                            "plane": sat_info["plane"],
+                            "position_in_plane": sat_info["position_in_plane"],
+                            "type" : NodeTypes.LEO_SATELLITE
+                        },
+                    )
                 )
 
                 [file.readline() for _ in range(2)]  # Last two lines are useless

@@ -10,7 +10,7 @@ import typer
 from topology_builder import __app_name__, __version__
 
 sys.path.append(os.path.abspath("./"))
-from topology_builder.satellite_repository import STKLeoSatelliteRepository
+from topology_builder.topology_builder.repository.satellite_repository import STKLeoSatelliteRepository
 from topology_builder.topology_builder import (
     MinimumDistanceTopologyBuilder,
     LOSTopologyBuilder,

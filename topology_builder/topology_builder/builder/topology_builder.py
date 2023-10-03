@@ -1,15 +1,12 @@
-import copy
 import math
-import os
-import sys
 from typing import Any, Dict, List, Self
 from skyfield.api import load, wgs84, EarthSatellite, utc
 from skyfield.toposlib import GeographicPosition
 from datetime import datetime
+from topology_builder.repository.satellite_repository import LeoSatelliteRepository
+from topology_builder.topology.topology import Topology
+from topology_builder.node_types import NodeTypes
 
-sys.path.append(os.path.abspath("./topology_builder"))
-from satellite_repository import LeoSatelliteRepository
-from topology import Topology
 
 class TopologyBuilder:
     def __init__(
@@ -19,14 +16,10 @@ class TopologyBuilder:
         self.t = load.timescale().from_datetime(t)
         self.topology = Topology(name, self.t)
 
-    # Private Methods
-
-    def _los_between_satellites(
-        self, sat_u: EarthSatellite, sat_v: EarthSatellite
-    ) -> bool:
+    def _los_between_satellites(self, sat_u: str, sat_v: str) -> bool:
         # Get position vertors
-        pos_u = sat_u.at(self.t).position.km
-        pos_v = sat_v.at(self.t).position.km
+        pos_u = self.topology.get_position(sat_u).position.km
+        pos_v = self.topology.get_position(sat_v).position.km
 
         num = sum(pos_u[:] * pos_u[:]) * sum(pos_v[:] * pos_v[:]) - math.pow(
             sum(pos_u[:] * pos_v[:]), 2
@@ -41,14 +34,11 @@ class TopologyBuilder:
 
         return res > 0
 
-    def _get_closer_satellite_to_gs(
-        self,
-        gs: GeographicPosition,  # Target GS
-    ) -> Dict[Any, Any]:
+    def _get_closer_satellite_to_gs(self, gs: str) -> Dict[str, Any]:
         """
         Return closer satellite to gs
         """
-        satellites = self.topology.get_satellites()
+        satellites: List[str] = self.topology.get_leo_satellites()
         # Closer until now
         closer = dict()
         # Initialization
@@ -57,7 +47,7 @@ class TopologyBuilder:
         # Iterate over the candidate satellites except the first
         for sat in satellites:
             # Get alt and distance
-            alt, _, distance = (sat - gs).at(self.t).altaz()
+            alt, _, distance = self.topology.get_difference(sat, gs).altaz()
             # below the horizon
             if alt.degrees <= 0:
                 continue
@@ -72,37 +62,35 @@ class TopologyBuilder:
 
         return closer
 
-    def _add_intra_plane_links(self, satellite: Dict[Any, Any]) -> None:
-        current_plane = self.topology.ntwk.nodes[satellite]["plane"]
-        current_position_in_plane = self.topology.ntwk.nodes[satellite][
-            "position_in_plane"
-        ]
+    def _add_intra_plane_links(self, satellite: str) -> None:
+        current_plane = self.topology.get_sat_plane(satellite)
+        current_position_in_plane = self.topology.get_position_in_plane(satellite)
 
-        for x, y in self.topology.ntwk.nodes(data=True):
-            if x == satellite:
+        for sat in self.topology.get_leo_satellites():
+            if sat == satellite:
                 continue
-            if type(x) != EarthSatellite:
+            if self.topology.get_sat_plane(sat) != current_plane:
                 continue
-            if y["plane"] != current_plane:
-                continue
-            if not self._los_between_satellites(satellite, x):
+            if not self._los_between_satellites(satellite, sat):
                 continue
             if not (
-                y["position_in_plane"]
+                self.topology.get_position_in_plane(sat)
                 == (current_position_in_plane + 1) % self.topology.no_sat_per_plane
-                or y["position_in_plane"]
+                or self.topology.get_position_in_plane(sat)
                 == (current_position_in_plane - 1) % self.topology.no_sat_per_plane
             ):
                 continue
 
             self.topology.ntwk.add_edge(
-                satellite, x, length=(x.at(self.t) - satellite.at(self.t)).distance().km
+                satellite,
+                sat,
+                length=self.topology.get_difference(sat, satellite).distance().km,
             )
 
     def _add_inter_plane_links(self, satellite: Dict[Any, Any]) -> None:
         pass
 
-    def _get_sat_for_building_gsl(self, gs: GeographicPosition) -> Dict[Any, Any]:
+    def _get_sat_for_building_gsl(self, gs: str) -> Dict[Any, Any]:
         pass
 
     # Public Methods
@@ -117,39 +105,43 @@ class TopologyBuilder:
             self: part of the builder pattern
         """
 
+        constellation = repository.get_constellation()
+
         if self.verbose:
-            print(f"\nAdding {len(repository.get_constellation())} leo satellites")
+            print(f"\nAdding {len(constellation)} LEO satellites")
 
         self.topology.ntwk.add_nodes_from(
             [
                 (
-                    satellite["satellite"],
-                    {
-                        "plane": satellite["plane"],
-                        "position_in_plane": satellite["position_in_plane"],
-                    },
+                    name,
+                    dict(
+                        info,
+                        **{
+                            "latitude": wgs84.latlon_of(
+                                info["skyfield_obj"].at(self.t)
+                            )[0].degrees,
+                            "longitude": wgs84.latlon_of(
+                                info["skyfield_obj"].at(self.t)
+                            )[1].degrees,
+                            "height": wgs84.height_of(
+                                info["skyfield_obj"].at(self.t)
+                            ).km,
+                        },
+                    ),
                 )
-                for satellite in repository.get_constellation()
+                for name, info in constellation
             ]
         )
 
-        self.topology.no_planes = (
-            max([satellite["plane"] for satellite in repository.get_constellation()])
-            + 1
-        )
+        self.topology.no_planes = max([info["plane"] for _, info in constellation]) + 1
+
         self.topology.no_sat_per_plane = (
-            max(
-                [
-                    satellite["position_in_plane"]
-                    for satellite in repository.get_constellation()
-                ]
-            )
-            + 1
+            max([info["position_in_plane"] for _, info in constellation]) + 1
         )
 
         if self.verbose:
-            print(f"no planes : {self.topology.no_planes}")
-            print(f"no satellites per plane : {self.topology.no_sat_per_plane}")
+            print(f"Number of planes : {self.topology.no_planes}")
+            print(f"Number of per plane : {self.topology.no_sat_per_plane}")
 
         return self
 
@@ -159,19 +151,27 @@ class TopologyBuilder:
         """
 
         if self.verbose:
-            print("\nBuilding GSs...")
+            print(f"\nBuilding {len(groud_stations)} GSs.")
 
         # Build skyfield's GeographicPosition object as well as the name of the GS
         gs_s_topo = [
             (
-                wgs84.latlon(groud_station["lat"], groud_station["lon"]),  # GS
-                {"name": groud_station["name"]},  # Attributes : name
+                groud_station["name"],
+                {
+                    "skyfield_obj": wgs84.latlon(
+                        groud_station["lat"], groud_station["lon"]
+                    ),
+                    "latitude": wgs84.latlon(
+                        groud_station["lat"], groud_station["lon"]
+                    ).latitude.degrees,
+                    "longitude": wgs84.latlon(
+                        groud_station["lat"], groud_station["lon"]
+                    ).longitude.degrees,
+                    "type": NodeTypes.GROUD_STATION,
+                },
             )
             for groud_station in groud_stations
         ]
-
-        if self.verbose:
-            print(f"Add : {len(gs_s_topo)} Ground Stations")
 
         # Add to the network
         self.topology.ntwk.add_nodes_from(gs_s_topo)
@@ -183,7 +183,7 @@ class TopologyBuilder:
         Add ISLs based on the four closer satellites.
         """
 
-        satellites = self.topology.get_satellites()
+        satellites = self.topology.get_leo_satellites()
 
         if len(satellites) == 0:
             raise Exception(
@@ -195,25 +195,11 @@ class TopologyBuilder:
 
         for i, satellite in enumerate(satellites):
             # Print logs every 10% of the progress
-            if self.verbose and i % int(0.1 * len(list(self.topology.ntwk.nodes))) == 0:
-                print(
-                    f"progressing... satellite {i + 1} of {len(list(self.topology.ntwk.nodes))}"
-                )
+            if self.verbose and i % int(0.1 * len(satellites)) == 0:
+                print(f"progressing... satellite {i + 1} of {len(satellites)}")
 
             self._add_intra_plane_links(satellite)
-            self._add_inter_plane_links(satellite)
-
-        #print(f"Graph: {self.topology.ntwk}")
-
-        #for satellite in satellites: 
-            #if len(list(self.topology.ntwk.neighbors(satellite))) != 4:
-                #print(
-                #    f"\nadj[{satellite.name}] has length {len(list(self.topology.ntwk.neighbors(satellite)))}"
-                #)
-                #print(
-                #    f"adj[{satellite.name}] : {list(self.topology.ntwk.neighbors(satellite))}"
-                #)
-                #raise Exception()
+            # self._add_inter_plane_links(satellite)
 
         return self
 
@@ -226,7 +212,7 @@ class TopologyBuilder:
             print("\nBuilding GSLs...")
 
         # At least one satellite needs to be present
-        if len(self.topology.get_satellites()) == 0:
+        if len(self.topology.get_leo_satellites()) == 0:
             raise Exception(
                 "The number of satellites in the topology should not be 0 when building GSLs."
             )
@@ -234,12 +220,18 @@ class TopologyBuilder:
         # Get Ground Stations
         gs_s = self.topology.get_GSs()
 
+        # At least one satellite needs to be present
+        if len(gs_s) == 0:
+            raise Exception(
+                "The number of ground stations in the topology should not be 0 when building GSLs."
+            )
+
         for i, gs in enumerate(gs_s):
             # Get closer satellite to gs
             closer_satellite = self._get_sat_for_building_gsl(gs=gs)
 
             if self.verbose:
-                print(f"Adding GSL {i + 1}/{len(gs_s)} ...")
+                print(f"Adding GSL {i + 1}/{len(gs_s)}.")
 
             self.topology.ntwk.add_edge(
                 gs,  # gs
@@ -271,34 +263,12 @@ class MinimumDistanceTopologyBuilder(TopologyBuilder):
             and self._los_between_satellites(satellite, x)
         ]
 
-        # print(
-        #     f"satellites_next_plane_los: {[(sat.name, (sat.at(self.t) - satellite.at(self.t)).distance().km) for sat in satellites_next_plane_los]}"
-        # )
-
-        """
-        satellites_previous_plane_los = [
-            x
-            for x, y in self.topology.ntwk.nodes(data=True)
-            if type(x) == EarthSatellite
-            and y["plane"] == (current_plane - 1) % self.topology.no_planes
-            and self._los_between_satellites(satellite, x)
-        ]
-
-        print(f"\nsatellites_previous_plane_los: {[(sat.name, (sat.at(self.t) - satellite.at(self.t)).distance().km, (satellite.at(self.t) - sat.at(self.t)).distance().km) for sat in satellites_previous_plane_los]}")
-       
-        min_dist_prev_plane = min(
-            satellites_previous_plane_los,
-            key=lambda x: (x.at(self.t) - satellite.at(self.t)).distance().km,
-        )
-        print(f"min_dist_prev_plane: {min_dist_prev_plane}")
-        """
-
         min_dist_next_plane = min(
             satellites_next_plane_los,
             key=lambda x: (x.at(self.t) - satellite.at(self.t)).distance().km,
         )
 
-        #print(f"min_dist_next_plane: {min_dist_next_plane}")
+        # print(f"min_dist_next_plane: {min_dist_next_plane}")
 
         self.topology.ntwk.add_edge(
             satellite,
@@ -308,7 +278,7 @@ class MinimumDistanceTopologyBuilder(TopologyBuilder):
             .km,
         )
 
-    def _get_sat_for_building_gsl(self, gs: GeographicPosition) -> Dict[Any, Any]:
+    def _get_sat_for_building_gsl(self, gs: str) -> Dict[Any, Any]:
         return self._get_closer_satellite_to_gs(gs)
 
 
@@ -373,7 +343,7 @@ class LOSTopologyBuilder(TopologyBuilder):
                     key=lambda x: (x.at(self.t) - satellite.at(self.t)).distance().km,
                 )
 
-                #print(f"min_dist_neigh_plane : {min_dist_neigh_plane}")
+                # print(f"min_dist_neigh_plane : {min_dist_neigh_plane}")
 
                 self.topology.ntwk.add_edge(
                     satellite,
