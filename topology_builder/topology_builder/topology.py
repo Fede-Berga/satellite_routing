@@ -1,5 +1,6 @@
 import random
 from typing import Any, Dict, List
+from click import Path
 import networkx as nx, json
 from skyfield.api import wgs84, EarthSatellite, Time
 from skyfield.toposlib import GeographicPosition
@@ -19,7 +20,18 @@ class Topology:
         self.no_sat_per_plane: int = 0
 
     def __str__(self) -> str:
-        return f"Topology : {json.dumps(self.to_json(), indent=4)}"
+        return json.dumps(
+            self.to_json(), 
+            indent=4, 
+            #default=lambda o: o.name if isinstance(o, EarthSatellite) else self.ntwk.nodes[o]["name"],
+        )
+
+    def __repr__(self) -> str:
+        return json.dumps(
+            nx.node_link_data(self.ntwk), 
+            indent=4, 
+            default=lambda o: o.name if isinstance(o, EarthSatellite) else self.ntwk.nodes[o]["name"],
+        )
 
     def get_GSs(self) -> List[GeographicPosition]:
         return [
@@ -177,3 +189,6 @@ class Topology:
             self._plot_edges(edges, color=next(colors))
 
         plt.show()
+    
+    def networkx_dump(self):
+        

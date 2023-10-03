@@ -1,0 +1,1110 @@
+{
+    "name": "Iridium",
+    "graph": {
+        "description": "Graph with 70 nodes and 136 edges",
+        "satellites": [
+            {
+                "name": "Iridium11",
+                "latitude": 1.886783907135068,
+                "longitude": 49.687266609187404,
+                "height": 1010.0799597960035
+            },
+            {
+                "name": "Iridium12",
+                "latitude": -58.21133276784279,
+                "longitude": 49.68726660918684,
+                "height": 1022.5149803871474
+            },
+            {
+                "name": "Iridium13",
+                "latitude": -62.10738882591692,
+                "longitude": -130.31273339081204,
+                "height": 1019.4486491417442
+            },
+            {
+                "name": "Iridium14",
+                "latitude": -1.9322426128361831,
+                "longitude": -130.3127333908126,
+                "height": 1001.7796815600552
+            },
+            {
+                "name": "Iridium15",
+                "latitude": 58.30023102271107,
+                "longitude": -130.31273339081315,
+                "height": 1015.8694956059104
+            },
+            {
+                "name": "Iridium16",
+                "latitude": 61.973631195528085,
+                "longitude": 49.687266609187965,
+                "height": 1021.043091346362
+            },
+            {
+                "name": "Iridium21",
+                "latitude": -25.498413015934766,
+                "longitude": 66.0508666091872,
+                "height": 1013.6565099333916
+            },
+            {
+                "name": "Iridium22",
+                "latitude": -85.33922975035806,
+                "longitude": 66.05086660918312,
+                "height": 1025.8403105232069
+            },
+            {
+                "name": "Iridium23",
+                "latitude": -34.84025353528771,
+                "longitude": -113.94913339081242,
+                "height": 1009.1839141989755
+            },
+            {
+                "name": "Iridium24",
+                "latitude": 25.517527226961807,
+                "longitude": -113.94913339081282,
+                "height": 1004.9491866224245
+            },
+            {
+                "name": "Iridium25",
+                "latitude": 85.46505144989645,
+                "longitude": -113.94913339081702,
+                "height": 1022.5447262224903
+            },
+            {
+                "name": "Iridium26",
+                "latitude": 34.73224674346556,
+                "longitude": 66.0508666091876,
+                "height": 1014.5614719043524
+            },
+            {
+                "name": "Iridium31",
+                "latitude": -52.773453508320216,
+                "longitude": 82.41456660918686,
+                "height": 1021.1401975454412
+            },
+            {
+                "name": "Iridium32",
+                "latitude": -67.54212592749974,
+                "longitude": -97.58543339081186,
+                "height": 1021.2108242478494
+            },
+            {
+                "name": "Iridium33",
+                "latitude": -7.425267883688605,
+                "longitude": -97.58543339081268,
+                "height": 1002.2214673294492
+            },
+            {
+                "name": "Iridium34",
+                "latitude": 52.852237950244515,
+                "longitude": -97.58543339081315,
+                "height": 1013.9786559789114
+            },
+            {
+                "name": "Iridium35",
+                "latitude": 67.40671304348871,
+                "longitude": 82.41456660918813,
+                "height": 1021.9809714312138
+            },
+            {
+                "name": "Iridium36",
+                "latitude": 7.367670287422789,
+                "longitude": 82.41456660918736,
+                "height": 1010.2037782169829
+            },
+            {
+                "name": "Iridium41",
+                "latitude": -79.91888398887983,
+                "longitude": 98.77816660918546,
+                "height": 1025.7749926715983
+            },
+            {
+                "name": "Iridium42",
+                "latitude": -40.30694062167243,
+                "longitude": -81.22183339081255,
+                "height": 1011.2174915487631
+            },
+            {
+                "name": "Iridium43",
+                "latitude": 20.03354937626421,
+                "longitude": -81.2218333908129,
+                "height": 1003.6616071172149
+            },
+            {
+                "name": "Iridium44",
+                "latitude": 80.03934659164447,
+                "longitude": -81.22183339081458,
+                "height": 1021.7261811016016
+            },
+            {
+                "name": "Iridium45",
+                "latitude": 40.19155986575686,
+                "longitude": 98.77816660918745,
+                "height": 1015.9071374680931
+            },
+            {
+                "name": "Iridium46",
+                "latitude": -20.02744407289341,
+                "longitude": 98.7781666091871,
+                "height": 1012.4486543857319
+            },
+            {
+                "name": "Iridium51",
+                "latitude": -72.9717983389416,
+                "longitude": -64.85823339081206,
+                "height": 1022.7418888495629
+            },
+            {
+                "name": "Iridium52",
+                "latitude": -12.916319036085769,
+                "longitude": -64.85823339081281,
+                "height": 1003.0231627295836
+            },
+            {
+                "name": "Iridium53",
+                "latitude": 47.3980129040997,
+                "longitude": -64.85823339081318,
+                "height": 1012.0304879878205
+            },
+            {
+                "name": "Iridium54",
+                "latitude": 72.83593325475209,
+                "longitude": 115.14176660918795,
+                "height": 1022.6819816707022
+            },
+            {
+                "name": "Iridium55",
+                "latitude": 12.847127993651098,
+                "longitude": 115.14176660918719,
+                "height": 1010.614001023057
+            },
+            {
+                "name": "Iridium56",
+                "latitude": -47.33007840536286,
+                "longitude": 115.14176660918683,
+                "height": 1019.6444413363782
+            },
+            {
+                "name": "Iridium61",
+                "latitude": -45.76705973077818,
+                "longitude": -48.49453339081276,
+                "height": 1013.32692592037
+            },
+            {
+                "name": "Iridium62",
+                "latitude": 14.545405249695431,
+                "longitude": -48.49453339081297,
+                "height": 1002.6700480431516
+            },
+            {
+                "name": "Iridium63",
+                "latitude": 74.61090015323191,
+                "longitude": -48.49453339081357,
+                "height": 1020.6145231202698
+            },
+            {
+                "name": "Iridium64",
+                "latitude": 45.64537406305305,
+                "longitude": 131.50546660918727,
+                "height": 1017.2873535344316
+            },
+            {
+                "name": "Iridium65",
+                "latitude": -14.552389379366927,
+                "longitude": 131.505466609187,
+                "height": 1011.4560756102968
+            },
+            {
+                "name": "Iridium66",
+                "latitude": -74.49686330475718,
+                "longitude": 131.50546660918644,
+                "height": 1025.381061058228
+            },
+            {
+                "name": "Iridium71",
+                "latitude": -18.40441917499355,
+                "longitude": -32.130933390812906,
+                "height": 1004.1606334957703
+            },
+            {
+                "name": "Iridium72",
+                "latitude": 41.93718248462548,
+                "longitude": -32.13093339081301,
+                "height": 1010.0892016059526
+            },
+            {
+                "name": "Iridium73",
+                "latitude": 78.26239252301806,
+                "longitude": 147.86906660918748,
+                "height": 1023.1098824866889
+            },
+            {
+                "name": "Iridium74",
+                "latitude": 18.324291767151706,
+                "longitude": 147.8690666091871,
+                "height": 1011.2903629186858
+            },
+            {
+                "name": "Iridium75",
+                "latitude": -41.88074331117724,
+                "longitude": 147.86906660918697,
+                "height": 1018.087514701981
+            },
+            {
+                "name": "Iridium76",
+                "latitude": -78.3975094551842,
+                "longitude": -32.13093339081253,
+                "height": 1023.9984473134208
+            },
+            {
+                "name": "Iridium81",
+                "latitude": 9.05434048269515,
+                "longitude": -15.767233390812882,
+                "height": 1002.0109854910189
+            },
+            {
+                "name": "Iridium82",
+                "latitude": 69.17888334703125,
+                "longitude": -15.767233390812832,
+                "height": 1019.2397465786134
+            },
+            {
+                "name": "Iridium83",
+                "latitude": 51.0934417348683,
+                "longitude": 164.2327666091871,
+                "height": 1018.6423621730504
+            },
+            {
+                "name": "Iridium84",
+                "latitude": -9.074366871014998,
+                "longitude": 164.2327666091871,
+                "height": 1010.7150014932671
+            },
+            {
+                "name": "Iridium85",
+                "latitude": -69.07228888165304,
+                "longitude": 164.23276660918717,
+                "height": 1024.6822341314294
+            },
+            {
+                "name": "Iridium86",
+                "latitude": -51.22031466869525,
+                "longitude": -15.767233390812908,
+                "height": 1015.4455829699868
+            },
+            {
+                "name": "Iridium91",
+                "latitude": 36.47000020467206,
+                "longitude": 0.5963666091872564,
+                "height": 1008.2200394124526
+            },
+            {
+                "name": "Iridium92",
+                "latitude": 83.68690952310821,
+                "longitude": -179.4036333908139,
+                "height": 1023.2381820614082
+            },
+            {
+                "name": "Iridium93",
+                "latitude": 23.797992972801577,
+                "longitude": -179.40363339081284,
+                "height": 1012.2019171953224
+            },
+            {
+                "name": "Iridium94",
+                "latitude": -36.42560194455983,
+                "longitude": -179.40363339081276,
+                "height": 1016.5307650243176
+            },
+            {
+                "name": "Iridium95",
+                "latitude": -83.820089121191,
+                "longitude": 0.5963666091861368,
+                "height": 1024.9468724959809
+            },
+            {
+                "name": "Iridium96",
+                "latitude": -23.888295707581303,
+                "longitude": 0.5963666091871547,
+                "height": 1005.5983302759563
+            },
+            {
+                "name": "Iridium101",
+                "latitude": 63.74218281635041,
+                "longitude": 16.959966609187674,
+                "height": 1017.641800813407
+            },
+            {
+                "name": "Iridium102",
+                "latitude": 56.53613334981066,
+                "longitude": -163.04003339081305,
+                "height": 1019.9130751722854
+            },
+            {
+                "name": "Iridium103",
+                "latitude": -3.594206991573992,
+                "longitude": -163.04003339081277,
+                "height": 1010.2513701619692
+            },
+            {
+                "name": "Iridium104",
+                "latitude": -63.64398993310296,
+                "longitude": -163.04003339081234,
+                "height": 1023.7125029008757
+            },
+            {
+                "name": "Iridium105",
+                "latitude": -56.6670390520456,
+                "longitude": 16.959966609186935,
+                "height": 1017.5073567766317
+            },
+            {
+                "name": "Iridium106",
+                "latitude": 3.5613132136793637,
+                "longitude": 16.959966609187266,
+                "height": 1001.7097587547319
+            },
+            {
+                "name": "Iridium111",
+                "latitude": 89.11068172032029,
+                "longitude": -146.6763333908305,
+                "height": 1023.0512139950065
+            },
+            {
+                "name": "Iridium112",
+                "latitude": 29.267499717895344,
+                "longitude": -146.67633339081277,
+                "height": 1013.3083364242931
+            },
+            {
+                "name": "Iridium113",
+                "latitude": -30.96472892677687,
+                "longitude": -146.6763333908125,
+                "height": 1015.0346342524897
+            },
+            {
+                "name": "Iridium114",
+                "latitude": -89.24075396889432,
+                "longitude": 33.3236666091665,
+                "height": 1025.564522295685
+            },
+            {
+                "name": "Iridium115",
+                "latitude": -29.367123195218056,
+                "longitude": 33.32366660918719,
+                "height": 1007.2907210053718
+            },
+            {
+                "name": "Iridium116",
+                "latitude": 30.996647590084752,
+                "longitude": 33.3236666091875,
+                "height": 1006.4867071534188
+            }
+        ],
+        "ground_stations": [
+            {
+                "name": "Tokyo",
+                "latitude": 35.652832,
+                "longitude": 139.839478
+            },
+            {
+                "name": "Melbourne",
+                "latitude": -37.840935,
+                "longitude": 144.946457
+            },
+            {
+                "name": "London",
+                "latitude": 51.509865,
+                "longitude": -0.118092
+            },
+            {
+                "name": "Sao Paulo",
+                "latitude": -23.533773,
+                "longitude": -46.62529
+            }
+        ],
+        "ISLs": [
+            {
+                "u": "Iridium11",
+                "v": "Iridium12",
+                "distance": 7379.850634591043
+            },
+            {
+                "u": "Iridium11",
+                "v": "Iridium16",
+                "distance": 7380.898077083434
+            },
+            {
+                "u": "Iridium11",
+                "v": "Iridium21",
+                "distance": 4013.1076877307055
+            },
+            {
+                "u": "Iridium12",
+                "v": "Iridium13",
+                "distance": 7379.430085477204
+            },
+            {
+                "u": "Iridium12",
+                "v": "Iridium22",
+                "distance": 3506.130678004195
+            },
+            {
+                "u": "Iridium12",
+                "v": "Iridium115",
+                "distance": 3944.1919020721657
+            },
+            {
+                "u": "Iridium13",
+                "v": "Iridium14",
+                "distance": 7385.856408216409
+            },
+            {
+                "u": "Iridium13",
+                "v": "Iridium23",
+                "distance": 3718.5283811551594
+            },
+            {
+                "u": "Iridium13",
+                "v": "Iridium114",
+                "distance": 3666.9076953044946
+            },
+            {
+                "u": "Iridium14",
+                "v": "Iridium15",
+                "distance": 7387.334209185487
+            },
+            {
+                "u": "Iridium14",
+                "v": "Iridium24",
+                "distance": 4015.353263110044
+            },
+            {
+                "u": "Iridium14",
+                "v": "Iridium113",
+                "distance": 4167.475967748633
+            },
+            {
+                "u": "Iridium15",
+                "v": "Iridium16",
+                "distance": 7381.95056430086
+            },
+            {
+                "u": "Iridium15",
+                "v": "Iridium25",
+                "distance": 3507.6244436509814
+            },
+            {
+                "u": "Iridium15",
+                "v": "Iridium112",
+                "distance": 3965.5333726833737
+            },
+            {
+                "u": "Iridium16",
+                "v": "Iridium26",
+                "distance": 3718.5085212283184
+            },
+            {
+                "u": "Iridium16",
+                "v": "Iridium111",
+                "distance": 3699.120818485867
+            },
+            {
+                "u": "Iridium16",
+                "v": "Iridium116",
+                "distance": 4163.666943646601
+            },
+            {
+                "u": "Iridium21",
+                "v": "Iridium22",
+                "distance": 7378.891654840695
+            },
+            {
+                "u": "Iridium21",
+                "v": "Iridium26",
+                "distance": 7380.866518164537
+            },
+            {
+                "u": "Iridium21",
+                "v": "Iridium31",
+                "distance": 3812.016638254609
+            },
+            {
+                "u": "Iridium22",
+                "v": "Iridium23",
+                "distance": 7381.894783400189
+            },
+            {
+                "u": "Iridium22",
+                "v": "Iridium32",
+                "distance": 3459.518282679232
+            },
+            {
+                "u": "Iridium23",
+                "v": "Iridium24",
+                "distance": 7387.925166984735
+            },
+            {
+                "u": "Iridium23",
+                "v": "Iridium33",
+                "distance": 3966.5440927069
+            },
+            {
+                "u": "Iridium24",
+                "v": "Iridium25",
+                "distance": 7384.893505365147
+            },
+            {
+                "u": "Iridium24",
+                "v": "Iridium34",
+                "distance": 3814.131527678376
+            },
+            {
+                "u": "Iridium25",
+                "v": "Iridium26",
+                "distance": 7380.848350418044
+            },
+            {
+                "u": "Iridium25",
+                "v": "Iridium35",
+                "distance": 3460.5479767374604
+            },
+            {
+                "u": "Iridium26",
+                "v": "Iridium36",
+                "distance": 3965.2461410395267
+            },
+            {
+                "u": "Iridium31",
+                "v": "Iridium32",
+                "distance": 7379.152069487389
+            },
+            {
+                "u": "Iridium31",
+                "v": "Iridium36",
+                "distance": 7380.074927467594
+            },
+            {
+                "u": "Iridium31",
+                "v": "Iridium41",
+                "distance": 3546.0328944392827
+            },
+            {
+                "u": "Iridium32",
+                "v": "Iridium33",
+                "distance": 7385.238233912115
+            },
+            {
+                "u": "Iridium32",
+                "v": "Iridium42",
+                "distance": 3662.570483705027
+            },
+            {
+                "u": "Iridium33",
+                "v": "Iridium34",
+                "distance": 7387.659397552579
+            },
+            {
+                "u": "Iridium33",
+                "v": "Iridium43",
+                "distance": 4031.5553167692924
+            },
+            {
+                "u": "Iridium34",
+                "v": "Iridium35",
+                "distance": 7382.342970599484
+            },
+            {
+                "u": "Iridium34",
+                "v": "Iridium44",
+                "distance": 3547.6248461135356
+            },
+            {
+                "u": "Iridium35",
+                "v": "Iridium36",
+                "distance": 7380.852379878653
+            },
+            {
+                "u": "Iridium35",
+                "v": "Iridium45",
+                "distance": 3662.782062924334
+            },
+            {
+                "u": "Iridium36",
+                "v": "Iridium46",
+                "distance": 4029.382546665915
+            },
+            {
+                "u": "Iridium41",
+                "v": "Iridium42",
+                "distance": 7381.282160930552
+            },
+            {
+                "u": "Iridium41",
+                "v": "Iridium46",
+                "distance": 7379.0249055771565
+            },
+            {
+                "u": "Iridium41",
+                "v": "Iridium51",
+                "distance": 3446.2011229913205
+            },
+            {
+                "u": "Iridium42",
+                "v": "Iridium43",
+                "distance": 7387.682656227931
+            },
+            {
+                "u": "Iridium42",
+                "v": "Iridium52",
+                "distance": 3927.050015203893
+            },
+            {
+                "u": "Iridium43",
+                "v": "Iridium44",
+                "distance": 7385.4451048080955
+            },
+            {
+                "u": "Iridium43",
+                "v": "Iridium53",
+                "distance": 3866.5604437091965
+            },
+            {
+                "u": "Iridium44",
+                "v": "Iridium45",
+                "distance": 7380.95651246522
+            },
+            {
+                "u": "Iridium44",
+                "v": "Iridium54",
+                "distance": 3447.3339422808053
+            },
+            {
+                "u": "Iridium45",
+                "v": "Iridium46",
+                "distance": 7380.928639098728
+            },
+            {
+                "u": "Iridium45",
+                "v": "Iridium55",
+                "distance": 3926.001230389957
+            },
+            {
+                "u": "Iridium46",
+                "v": "Iridium56",
+                "distance": 3864.3659884692383
+            },
+            {
+                "u": "Iridium51",
+                "v": "Iridium52",
+                "distance": 7384.582511091074
+            },
+            {
+                "u": "Iridium51",
+                "v": "Iridium56",
+                "distance": 7378.95369256458
+            },
+            {
+                "u": "Iridium51",
+                "v": "Iridium61",
+                "distance": 3609.073383342364
+            },
+            {
+                "u": "Iridium52",
+                "v": "Iridium53",
+                "distance": 7387.902659518572
+            },
+            {
+                "u": "Iridium52",
+                "v": "Iridium62",
+                "distance": 4037.972848937234
+            },
+            {
+                "u": "Iridium53",
+                "v": "Iridium54",
+                "distance": 7382.786291835239
+            },
+            {
+                "u": "Iridium53",
+                "v": "Iridium63",
+                "distance": 3594.7119056796137
+            },
+            {
+                "u": "Iridium54",
+                "v": "Iridium55",
+                "distance": 7380.808657494396
+            },
+            {
+                "u": "Iridium54",
+                "v": "Iridium64",
+                "distance": 3609.495544868002
+            },
+            {
+                "u": "Iridium55",
+                "v": "Iridium56",
+                "distance": 7380.2861664766215
+            },
+            {
+                "u": "Iridium55",
+                "v": "Iridium65",
+                "distance": 4035.9100681650984
+            },
+            {
+                "u": "Iridium56",
+                "v": "Iridium66",
+                "distance": 3593.015668111001
+            },
+            {
+                "u": "Iridium61",
+                "v": "Iridium62",
+                "distance": 7387.346136430219
+            },
+            {
+                "u": "Iridium61",
+                "v": "Iridium66",
+                "distance": 7380.719981991846
+            },
+            {
+                "u": "Iridium61",
+                "v": "Iridium71",
+                "distance": 3880.934344162354
+            },
+            {
+                "u": "Iridium62",
+                "v": "Iridium63",
+                "distance": 7385.97923315417
+            },
+            {
+                "u": "Iridium62",
+                "v": "Iridium72",
+                "distance": 3914.3097226570303
+            },
+            {
+                "u": "Iridium63",
+                "v": "Iridium64",
+                "distance": 7381.1178842321415
+            },
+            {
+                "u": "Iridium63",
+                "v": "Iridium73",
+                "distance": 3445.6121824833276
+            },
+            {
+                "u": "Iridium64",
+                "v": "Iridium65",
+                "distance": 7380.958118525204
+            },
+            {
+                "u": "Iridium64",
+                "v": "Iridium74",
+                "distance": 3880.1451595837134
+            },
+            {
+                "u": "Iridium65",
+                "v": "Iridium66",
+                "distance": 7379.198624681118
+            },
+            {
+                "u": "Iridium65",
+                "v": "Iridium75",
+                "distance": 3912.057533230271
+            },
+            {
+                "u": "Iridium66",
+                "v": "Iridium76",
+                "distance": 3444.3866230764665
+            },
+            {
+                "u": "Iridium71",
+                "v": "Iridium72",
+                "distance": 7388.055622594707
+            },
+            {
+                "u": "Iridium71",
+                "v": "Iridium76",
+                "distance": 7383.904653303186
+            },
+            {
+                "u": "Iridium71",
+                "v": "Iridium81",
+                "distance": 4034.448484866953
+            },
+            {
+                "u": "Iridium72",
+                "v": "Iridium73",
+                "distance": 7383.273236558242
+            },
+            {
+                "u": "Iridium72",
+                "v": "Iridium82",
+                "distance": 3646.9940410524005
+            },
+            {
+                "u": "Iridium73",
+                "v": "Iridium74",
+                "distance": 7380.77674759184
+            },
+            {
+                "u": "Iridium73",
+                "v": "Iridium83",
+                "distance": 3560.7705300330053
+            },
+            {
+                "u": "Iridium74",
+                "v": "Iridium75",
+                "distance": 7380.476323652993
+            },
+            {
+                "u": "Iridium74",
+                "v": "Iridium84",
+                "distance": 4032.531555392838
+            },
+            {
+                "u": "Iridium75",
+                "v": "Iridium76",
+                "distance": 7378.83339537523
+            },
+            {
+                "u": "Iridium75",
+                "v": "Iridium85",
+                "distance": 3645.189178918694
+            },
+            {
+                "u": "Iridium76",
+                "v": "Iridium86",
+                "distance": 3560.1614431032035
+            },
+            {
+                "u": "Iridium81",
+                "v": "Iridium82",
+                "distance": 7386.481412324581
+            },
+            {
+                "u": "Iridium81",
+                "v": "Iridium86",
+                "distance": 7386.922855915398
+            },
+            {
+                "u": "Iridium81",
+                "v": "Iridium91",
+                "distance": 3955.841806755963
+            },
+            {
+                "u": "Iridium82",
+                "v": "Iridium83",
+                "distance": 7381.336465624048
+            },
+            {
+                "u": "Iridium82",
+                "v": "Iridium92",
+                "distance": 3455.466982952821
+            },
+            {
+                "u": "Iridium83",
+                "v": "Iridium84",
+                "distance": 7380.958808418448
+            },
+            {
+                "u": "Iridium83",
+                "v": "Iridium93",
+                "distance": 3829.129208419149
+            },
+            {
+                "u": "Iridium84",
+                "v": "Iridium85",
+                "distance": 7379.401679740877
+            },
+            {
+                "u": "Iridium84",
+                "v": "Iridium94",
+                "distance": 3953.5590773628387
+            },
+            {
+                "u": "Iridium85",
+                "v": "Iridium86",
+                "distance": 7380.218756900548
+            },
+            {
+                "u": "Iridium85",
+                "v": "Iridium95",
+                "distance": 3454.153491680874
+            },
+            {
+                "u": "Iridium86",
+                "v": "Iridium96",
+                "distance": 3829.6556678865622
+            },
+            {
+                "u": "Iridium91",
+                "v": "Iridium92",
+                "distance": 7383.79442525029
+            },
+            {
+                "u": "Iridium91",
+                "v": "Iridium96",
+                "distance": 7388.112235338951
+            },
+            {
+                "u": "Iridium91",
+                "v": "Iridium101",
+                "distance": 3702.3591415200153
+            },
+            {
+                "u": "Iridium92",
+                "v": "Iridium93",
+                "distance": 7380.766534671505
+            },
+            {
+                "u": "Iridium92",
+                "v": "Iridium102",
+                "distance": 3518.5459372265223
+            },
+            {
+                "u": "Iridium93",
+                "v": "Iridium94",
+                "distance": 7380.639045550881
+            },
+            {
+                "u": "Iridium93",
+                "v": "Iridium103",
+                "distance": 4019.303717285924
+            },
+            {
+                "u": "Iridium94",
+                "v": "Iridium95",
+                "distance": 7378.787283579138
+            },
+            {
+                "u": "Iridium94",
+                "v": "Iridium104",
+                "distance": 3700.444915797081
+            },
+            {
+                "u": "Iridium95",
+                "v": "Iridium96",
+                "distance": 7383.220454763842
+            },
+            {
+                "u": "Iridium95",
+                "v": "Iridium105",
+                "distance": 3517.774370713033
+            },
+            {
+                "u": "Iridium96",
+                "v": "Iridium106",
+                "distance": 4021.0415958848903
+            },
+            {
+                "u": "Iridium101",
+                "v": "Iridium102",
+                "distance": 7381.61415633515
+            },
+            {
+                "u": "Iridium101",
+                "v": "Iridium106",
+                "distance": 7386.93752315152
+            },
+            {
+                "u": "Iridium101",
+                "v": "Iridium111",
+                "distance": 3476.4643230934234
+            },
+            {
+                "u": "Iridium102",
+                "v": "Iridium103",
+                "distance": 7380.9363816213545
+            },
+            {
+                "u": "Iridium102",
+                "v": "Iridium112",
+                "distance": 3774.6437268370096
+            },
+            {
+                "u": "Iridium103",
+                "v": "Iridium104",
+                "distance": 7379.622728496277
+            },
+            {
+                "u": "Iridium103",
+                "v": "Iridium113",
+                "distance": 3987.601550389962
+            },
+            {
+                "u": "Iridium104",
+                "v": "Iridium105",
+                "distance": 7379.786798851616
+            },
+            {
+                "u": "Iridium104",
+                "v": "Iridium114",
+                "distance": 3475.0626870780216
+            },
+            {
+                "u": "Iridium105",
+                "v": "Iridium106",
+                "distance": 7386.422390408239
+            },
+            {
+                "u": "Iridium105",
+                "v": "Iridium115",
+                "distance": 3774.9115104887856
+            },
+            {
+                "u": "Iridium106",
+                "v": "Iridium116",
+                "distance": 3989.883163325143
+            },
+            {
+                "u": "Iridium111",
+                "v": "Iridium112",
+                "distance": 7380.787510028714
+            },
+            {
+                "u": "Iridium111",
+                "v": "Iridium116",
+                "distance": 7384.338714384153
+            },
+            {
+                "u": "Iridium112",
+                "v": "Iridium113",
+                "distance": 7380.769901730808
+            },
+            {
+                "u": "Iridium113",
+                "v": "Iridium114",
+                "distance": 7378.809325891503
+            },
+            {
+                "u": "Iridium114",
+                "v": "Iridium115",
+                "distance": 7382.545512742369
+            },
+            {
+                "u": "Iridium115",
+                "v": "Iridium116",
+                "distance": 7388.069014413275
+            }
+        ],
+        "GSLs": [
+            {
+                "u": "Iridium64",
+                "v": "Tokyo",
+                "distance": 1739.7657453633562
+            },
+            {
+                "u": "Iridium71",
+                "v": "Sao Paulo",
+                "distance": 1997.798184491901
+            },
+            {
+                "u": "Iridium75",
+                "v": "Melbourne",
+                "distance": 1158.5051464752369
+            },
+            {
+                "u": "Iridium91",
+                "v": "London",
+                "distance": 2058.3325800380003
+            }
+        ]
+    }
+}

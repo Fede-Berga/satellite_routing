@@ -54,8 +54,9 @@ def build_single_topology(
         typer.secho(topology)
     else:
         with open(config["output_file"], "w") as file:
-            json.dump(topology.to_json(), file, indent=4)
-            print(f'Topology successfully saved to "{config["output_file"]}"')
+            topology.dump()
+            # json.dump(topology.to_json(), file, indent=4)
+            # print(f'Topology successfully saved to "{config["output_file"]}"')
 
 
 @app.command()

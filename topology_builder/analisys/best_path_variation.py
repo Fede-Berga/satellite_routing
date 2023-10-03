@@ -53,6 +53,11 @@ def main(verbose: bool = True):
             .build()
         )
 
+        # with open(f"iridium_{now}.json", "w") as f:
+        #     json.dump(current_topology.to_json(), f, indent=4)
+
+        # break
+
         now += datetime.timedelta(milliseconds=dt)
 
         start_time = time.time()
