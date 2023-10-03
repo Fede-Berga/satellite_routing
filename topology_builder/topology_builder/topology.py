@@ -189,6 +189,3 @@ class Topology:
             self._plot_edges(edges, color=next(colors))
 
         plt.show()
-    
-    def networkx_dump(self):
-        
