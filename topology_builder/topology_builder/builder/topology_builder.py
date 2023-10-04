@@ -1,7 +1,7 @@
+import itertools
 import math
 from typing import Any, Dict, List, Self
-from skyfield.api import load, wgs84, EarthSatellite, utc
-from skyfield.toposlib import GeographicPosition
+from skyfield.api import load, wgs84, utc
 from datetime import datetime
 from topology_builder.repository.satellite_repository import LeoSatelliteRepository
 from topology_builder.topology.topology import Topology
@@ -30,7 +30,7 @@ class TopologyBuilder:
             - 2 * sum(pos_u[:] * pos_v[:])
         )
 
-        res = math.sqrt(num / den) - 6378.14  # Earth radius
+        res = math.sqrt(abs(num / den)) - 6378.14  # Earth radius
 
         return res > 0
 
@@ -62,9 +62,34 @@ class TopologyBuilder:
 
         return closer
 
-    def _add_intra_plane_links(self, satellite: str) -> None:
+    def get_closer_sat_next_plane(self, satellite: str) -> Dict[str, Any]:
+        current_plane = self.topology.get_sat_plane(satellite)
+
+        satellites_next_plane_los = [
+            sat
+            for sat in self.topology.get_leo_satellites()
+            if self.topology.get_sat_plane(sat)
+            == (current_plane + 1) % self.topology.no_planes
+            and self._los_between_satellites(satellite, sat)
+        ]
+
+        min_dist_next_plane = min(
+            satellites_next_plane_los,
+            key=lambda x: self.topology.get_difference(x, satellite).distance().km,
+        )
+
+        return {
+            "satellite": min_dist_next_plane,
+            "distance": self.topology.get_difference(min_dist_next_plane, satellite)
+            .distance()
+            .km,
+        }
+
+    def _add_intra_plane_links(self, satellite: str) -> List[Dict[str, Any]]:
         current_plane = self.topology.get_sat_plane(satellite)
         current_position_in_plane = self.topology.get_position_in_plane(satellite)
+
+        candidates = []
 
         for sat in self.topology.get_leo_satellites():
             if sat == satellite:
@@ -81,16 +106,21 @@ class TopologyBuilder:
             ):
                 continue
 
-            self.topology.ntwk.add_edge(
-                satellite,
-                sat,
-                length=self.topology.get_difference(sat, satellite).distance().km,
+            candidates.append(
+                {
+                    "satellite": sat,
+                    "distance": self.topology.get_difference(sat, satellite)
+                    .distance()
+                    .km,
+                }
             )
 
-    def _add_inter_plane_links(self, satellite: Dict[Any, Any]) -> None:
+        return candidates
+
+    def _add_inter_plane_links(self, satellite: Dict[Any, Any]) -> Dict[str, Any]:
         pass
 
-    def _get_sat_for_building_gsl(self, gs: str) -> Dict[Any, Any]:
+    def _get_sat_for_building_gsl(self, gs: str) -> Dict[str, Any]:
         pass
 
     # Public Methods
@@ -198,8 +228,17 @@ class TopologyBuilder:
             if self.verbose and i % int(0.1 * len(satellites)) == 0:
                 print(f"progressing... satellite {i + 1} of {len(satellites)}")
 
-            self._add_intra_plane_links(satellite)
-            # self._add_inter_plane_links(satellite)
+            candidates = itertools.chain(
+                self._add_intra_plane_links(satellite),
+                [self._add_inter_plane_links(satellite)],
+            )
+
+            [
+                self.topology.ntwk.add_edge(
+                    satellite, candidate["satellite"], length=candidate["distance"]
+                )
+                for candidate in candidates
+            ]
 
         return self
 
@@ -243,134 +282,3 @@ class TopologyBuilder:
 
     def build(self) -> Topology:
         return self.topology
-
-
-class MinimumDistanceTopologyBuilder(TopologyBuilder):
-    def __init__(
-        self, verbose: bool, name: str, t: datetime = datetime.now(tz=utc)
-    ) -> None:
-        super().__init__(verbose, name, t)
-
-    def _add_inter_plane_links(self, satellite: Dict[Any, Any]) -> None:
-        # print("inter plane MINDIST...")
-        current_plane = self.topology.ntwk.nodes[satellite]["plane"]
-
-        satellites_next_plane_los = [
-            x
-            for x, y in self.topology.ntwk.nodes(data=True)
-            if type(x) == EarthSatellite
-            and y["plane"] == (current_plane + 1) % self.topology.no_planes
-            and self._los_between_satellites(satellite, x)
-        ]
-
-        min_dist_next_plane = min(
-            satellites_next_plane_los,
-            key=lambda x: (x.at(self.t) - satellite.at(self.t)).distance().km,
-        )
-
-        # print(f"min_dist_next_plane: {min_dist_next_plane}")
-
-        self.topology.ntwk.add_edge(
-            satellite,
-            min_dist_next_plane,
-            length=(min_dist_next_plane.at(self.t) - satellite.at(self.t))
-            .distance()
-            .km,
-        )
-
-    def _get_sat_for_building_gsl(self, gs: str) -> Dict[Any, Any]:
-        return self._get_closer_satellite_to_gs(gs)
-
-
-class LOSTopologyBuilder(TopologyBuilder):
-    def __init__(
-        self,
-        verbose: bool,
-        name: str,
-        previous_topology: Topology,
-        t: datetime = datetime.now(tz=utc),
-    ) -> None:
-        super().__init__(verbose, name, t)
-        self.previous_topology = previous_topology
-
-    def _add_inter_plane_links(self, satellite: Dict[Any, Any]) -> None:
-        current_plane = self.topology.ntwk.nodes[satellite]["plane"]
-
-        prev_satellite = [
-            sat
-            for sat in self.previous_topology.get_satellites()
-            if sat.name == satellite.name
-        ][0]
-
-        # print(f"\n{satellite.name}")
-
-        for neigh_prev in self.previous_topology.ntwk.neighbors(prev_satellite):
-            if (
-                type(neigh_prev) != EarthSatellite
-                or self.previous_topology.ntwk.nodes[neigh_prev]["plane"]
-                == current_plane
-            ):
-                continue
-
-            neigh_current = [
-                sat
-                for sat in self.topology.get_satellites()
-                if sat.name == neigh_prev.name
-            ][0]
-
-            if self._los_between_satellites(satellite, neigh_current):
-                # print(f"{satellite.name} and {neigh.name} are los at distance {(neigh.at(self.t) - prev_satellite.at(self.t)).distance().km}")
-                self.topology.ntwk.add_edge(
-                    satellite,
-                    neigh_current,
-                    length=(neigh_current.at(self.t) - satellite.at(self.t))
-                    .distance()
-                    .km,
-                )
-            else:
-                neigh_plane = self.previous_topology.ntwk.nodes[neigh_prev]["plane"]
-
-                satellites_neigh_plane_los_current_topo = [
-                    x
-                    for x, y in self.topology.ntwk.nodes(data=True)
-                    if type(x) == EarthSatellite
-                    and y["plane"] == neigh_plane
-                    and self._los_between_satellites(satellite, x)
-                ]
-
-                min_dist_neigh_plane = min(
-                    satellites_neigh_plane_los_current_topo,
-                    key=lambda x: (x.at(self.t) - satellite.at(self.t)).distance().km,
-                )
-
-                # print(f"min_dist_neigh_plane : {min_dist_neigh_plane}")
-
-                self.topology.ntwk.add_edge(
-                    satellite,
-                    min_dist_neigh_plane,
-                    length=(min_dist_neigh_plane.at(self.t) - satellite.at(self.t))
-                    .distance()
-                    .km,
-                )
-
-    def _get_sat_for_building_gsl(self, gs: GeographicPosition) -> Dict[Any, Any]:
-        for node in self.previous_topology.get_GSs():
-            if not (
-                node.latitude.degrees == gs.latitude.degrees
-                and node.longitude.degrees == gs.longitude.degrees
-            ):
-                continue
-
-            prev_sat = next(self.previous_topology.ntwk.neighbors(node))
-
-            sat = [
-                x for x in self.topology.get_satellites() if x.name == prev_sat.name
-            ][0]
-
-            # Get alt and distance
-            alt, _, distance = (prev_sat - gs).at(self.t).altaz()
-            # below the horizon
-            if alt.degrees <= 0:
-                return self._get_closer_satellite_to_gs(gs)
-            else:
-                return {"satellite": sat, "distance": distance.km}

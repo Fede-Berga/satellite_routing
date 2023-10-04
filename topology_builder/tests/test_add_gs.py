@@ -1,6 +1,6 @@
 import datetime
 import pytz
-from topology_builder.builder.topology_builder import MinimumDistanceTopologyBuilder
+from topology_builder.builder.min_distance_topology_builder import MinimumDistanceTopologyBuilder
 from topology_builder.topology.topology import Topology
 
 
@@ -20,8 +20,6 @@ class TestAddGroundStation:
             .add_GSs(gs_s)
             .build()
         )
-
-        # print(topology)
 
         assert len(topology.get_GSs()) == 2
 

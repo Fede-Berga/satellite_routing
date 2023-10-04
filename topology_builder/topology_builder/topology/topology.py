@@ -116,7 +116,7 @@ class Topology:
         for line in all_lines:
             line.set(linestyle="-", alpha=0.3, color="w")
 
-    def get_shuffled_matplotlib_colors() -> cycle:
+    def get_shuffled_matplotlib_colors(self) -> cycle:
         colors = list(mcolors.CSS4_COLORS.items())
         random.shuffle(colors)
         colors = dict(colors)

@@ -26,7 +26,7 @@ class TestAddISLs:
         print(topology)
 
         for sat in topology.get_leo_satellites():
-            assert len(list(topology.ntwk.adj[sat])) == 2
+            assert len(list(topology.ntwk.adj[sat])) == 4
 
         assert topology.get_ISLs() != 0
 
