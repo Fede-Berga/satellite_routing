@@ -13,7 +13,7 @@ ground_stations :
   - name : 'London'
     lat : 51.509865
     lon : -0.118092
-  - name : 'Sao Paulo'
+  - name : 'Sao_Paulo'
     lat : -23.533773
     lon : -46.625290
   #- name : 'Mexico City'

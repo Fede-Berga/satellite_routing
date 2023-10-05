@@ -1,46 +1,62 @@
+from enum import Enum
 import json
-from typing import List
+from typing import Any, List, Self, Tuple
 from click import Path
-from sns.leo_satellite import LeoSatellite
-from sns.ground_station import GroundStation
+import networkx as nx
+from ns.packet.dist_generator import DistPacketGenerator
+from ns.packet.sink import PacketSink
+from ns.switch.switch import SimplePacketSwitch
+
+
+class NodeTypes(str, Enum):
+    GROUD_STATION = "GROUD_STATION"
+    LEO_SATELLITE = "LEO_SATELLITE"
 
 
 class Topology:
-    def __init__(
-        self, 
-        all_satellites: List[LeoSatellite] = [], 
-        all_gs: List[GroundStation] = []
-    ) -> None:
-        self.all_satellite: LeoSatellite = all_satellites
-        self.all_gs: GroundStation = all_gs
+    def __init__(self, graph: nx.Graph) -> None:
+        self.graph = graph
 
     def __str__(self) -> str:
-        return f"LEO satellites: {self.all_satellite}, ground_stations: {self.all_gs}"
+        return f"Network: {json.dumps(nx.node_link_data(self.graph), indent=4, default=lambda o: f'{type(o)}')}"
 
-    @classmethod
-    def from_json(cls, file: Path):
-        with open(file, "r") as f:
-            data = json.loads(f.read())
+    def __repr__(self) -> str:
+        return self.__str__()
 
-        graph = data["graph"]
+    def get_GSs(self) -> List[Tuple[Any, Any]]:
+        return [
+            (node, info)
+            for node, info in self.graph.nodes(data=True)
+            if info["type"] == NodeTypes.GROUD_STATION
+        ]
 
-        return cls(
-            all_satellites=[
-                LeoSatellite(id=i, name=leo_sat["name"])
-                for i, leo_sat in enumerate(graph["satellites"])
-            ],
-            all_gs=[
-                GroundStation(id=i, name=gs["name"])
-                for i, gs in enumerate(graph["ground_stations"])
-            ],
+    def get_leo_satellites(self) -> List[Tuple[Any, Any]]:
+        return [
+            (node, info)
+            for node, info in self.graph.nodes(data=True)
+            if info["type"] == NodeTypes.LEO_SATELLITE
+        ]
+
+    def get_shortest_path(
+        self, source: str, target: str, weight=None
+    ) -> Tuple[List[str], int]:
+        return (
+            nx.shortest_path(G=self.graph, source=source, target=target, weight=weight),
+            nx.shortest_path_length(
+                G=self.graph, source=source, target=target, weight=weight
+            ),
         )
 
     @classmethod
-    def from_topology_builder_svc(cls):
-        # TODO
-        print("todo")
-    
+    def from_json(cls, file: Path) -> Self:
+        with open(file, "r") as f:
+            data = json.loads(f.read())
+
+        nx_obj = data["networkx_obj"]
+
+        return cls(graph=nx.node_link_graph(nx_obj))
+
     @classmethod
-    def from_networkx(cls):
+    def from_topology_builder_svc(cls):
         # TODO
         print("todo")

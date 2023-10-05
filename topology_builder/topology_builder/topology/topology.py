@@ -20,13 +20,18 @@ class Topology:
         self.no_sat_per_plane: int = 0
 
     def __str__(self) -> str:
+        nx_data = nx.node_link_data(self.ntwk)
+
+        for node in nx_data['nodes']:
+            del node['skyfield_obj']
+
         dict_graph = {
             "name": self.name,
             "t": self.t.utc_strftime(),
             "description": self.ntwk.__str__(),
             "no_planes": self.no_planes,
             "no_sat_per_plane": self.no_sat_per_plane,
-            "networkx_obj": nx.node_link_data(self.ntwk),
+            "networkx_obj": nx_data,
         }
 
         return json.dumps(

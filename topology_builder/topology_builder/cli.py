@@ -1,22 +1,20 @@
 import datetime
 import json
-import os
 from pathlib import Path
-import sys
 import time
 import yaml
 from typing import Annotated, Optional
 import typer
 from topology_builder import __app_name__, __version__
-
-sys.path.append(os.path.abspath("./"))
-from topology_builder.topology_builder.repository.satellite_repository import STKLeoSatelliteRepository
-from topology_builder.topology_builder import (
+from topology_builder.builder.min_distance_topology_builder import (
     MinimumDistanceTopologyBuilder,
-    LOSTopologyBuilder,
 )
+from topology_builder.repository.satellite_repository import STKLeoSatelliteRepository
+from topology_builder.topology.topology import Topology
+
 
 app = typer.Typer()
+
 
 @app.command()
 def build_single_topology(
@@ -32,7 +30,7 @@ def build_single_topology(
         print("Read config successful")
         print(json.dumps(config, indent=4))
 
-    topology = (
+    topology : Topology = (
         MinimumDistanceTopologyBuilder(
             verbose=verbose,
             name=config["name"],
@@ -54,9 +52,7 @@ def build_single_topology(
         typer.secho(topology)
     else:
         with open(config["output_file"], "w") as file:
-            topology.dump()
-            # json.dump(topology.to_json(), file, indent=4)
-            # print(f'Topology successfully saved to "{config["output_file"]}"')
+            file.write(str(topology))
 
 
 @app.command()
@@ -85,7 +81,7 @@ def build_dynamic_topology(
 
     while now <= end_time:
         if verbose:
-            print(f"Building topology at {now}")
+            print(f"\nBuilding topology at {now}")
 
         dyn_status.append(
             MinimumDistanceTopologyBuilder(
