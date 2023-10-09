@@ -1,7 +1,7 @@
 import simpy
 from ns.packet.dist_generator import DistPacketGenerator
 from ns.packet.sink import PacketSink
-from sns.topology import Topology, NodeTypes
+from sns.sns.network import Topology, NodeTypes
 from ns.switch.switch import SimplePacketSwitch
 from ns.port.wire import Wire
 from scipy import constants
@@ -123,7 +123,7 @@ def main():
 
                 prev_hop = hop
 
-    env.run(until=100)
+    env.run(until=1000)
 
     for gs, info in topo.get_GSs():
         print(f"\n{gs}")

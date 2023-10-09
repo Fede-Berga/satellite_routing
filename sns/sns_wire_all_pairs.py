@@ -1,7 +1,7 @@
 import simpy
 from ns.packet.dist_generator import DistPacketGenerator
 from ns.packet.sink import PacketSink
-from sns.topology import Topology
+from sns.sns.network import Topology
 from ns.port.wire import Wire
 from scipy import constants
 
