@@ -5,23 +5,27 @@ import simpy
 from sns.network import Network
 
 
-class Sns:
-    def __init__(
-        self, env: simpy.Environment, start_time: datetime, end_time: datetime, snapshot_duration: timedelta
-    ) -> None:
-        self.env = env
-        self.start_time = start_time
-        self.end_time = end_time
-        self.snapshot_duration = snapshot_duration
-    
-    def run(self, svc_url: str) -> None:
+def run_sns_simulation(
+    env: simpy.Environment,
+    svc_url: str,
+    start_time: datetime,
+    end_time: datetime,
+    snapshot_duration: timedelta,
+) -> None:
+    now = start_time
+    old_ntwk = None
 
-        now = self.start_time
+    while now <= end_time:
+        ntwk = Network.from_topology_builder_svc(
+            env=env,
+            svc_url=f"{svc_url}?t={now.strftime('%Y-%m-%d %H:%M:%S %z').replace('+', '%2B')}",
+            old_ntwk=old_ntwk
+        )
 
-        while now <= self.end_time:
+        print(now)
 
-            ntwk = Network.from_topology_builder_svc(svc_url)
+        env.run(until=((now - start_time) + snapshot_duration).seconds * 1000)
 
-            self.env.run(self.snapshot_duration)
+        old_ntwk = ntwk
 
-            now += self.snapshot_duration
+        now += snapshot_duration

@@ -3,7 +3,7 @@ from typing import List, Tuple
 import networkx as nx, json
 from skyfield.api import wgs84, Time
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 import numpy as np
 from itertools import chain, cycle
 import matplotlib.colors as mcolors
@@ -90,6 +90,8 @@ class Topology:
     def get_node_lat_lon(self, node: str):
         lat, long = wgs84.latlon_of(self.ntwk.nodes[node]["skyfield_obj"].at(self.t))
         return lat.degrees, long.degrees
+    
+    """
 
     def _plot_edges(self, edges: List[Tuple[str, str]], color=None):
         for u, v in edges:
@@ -169,3 +171,4 @@ class Topology:
             self._plot_edges(edges, color=next(colors))
 
         plt.show()
+    """

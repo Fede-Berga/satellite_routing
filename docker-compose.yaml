@@ -1,0 +1,5 @@
+services:
+  topology_builder:
+    build: ./topology_builder
+    ports:
+      - "8000:8000"

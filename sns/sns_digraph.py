@@ -2,7 +2,7 @@ import itertools
 import simpy
 from ns.packet.dist_generator import DistPacketGenerator
 from ns.packet.sink import PacketSink
-from sns.sns.network import Topology, NodeTypes
+from sns.network import Network, NodeTypes
 from ns.switch.switch import SimplePacketSwitch
 from ns.port.wire import Wire
 from scipy import constants
@@ -12,7 +12,7 @@ import networkx as nx
 def main():
     env = simpy.Environment()
 
-    topo = Topology.from_json("../topology_builder/results/iridium_static_status.json")
+    topo = Network.from_json("../topology_builder/results/iridium_static_status.json")
 
     topo.graph = nx.DiGraph(topo.graph)
 
