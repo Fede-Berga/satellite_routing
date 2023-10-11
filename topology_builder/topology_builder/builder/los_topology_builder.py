@@ -3,6 +3,7 @@ from skyfield.api import utc
 from datetime import datetime
 from topology_builder.topology.topology import Topology
 from topology_builder.builder.topology_builder import TopologyBuilder
+from topology_builder.node_types import NodeTypes
 
 
 class LOSTopologyBuilder(TopologyBuilder):
@@ -20,17 +21,19 @@ class LOSTopologyBuilder(TopologyBuilder):
         next_plane = (
             self.topology.get_sat_plane(satellite) + 1
         ) % self.topology.no_planes
-
+        
         candidate_next_plane = next(
             iter(
                 [
                     sat
                     for sat in self.previous_topology.ntwk.adj[satellite]
-                    if self.previous_topology.get_sat_plane(sat) == next_plane
+                    if self.previous_topology.ntwk.nodes[sat]["type"]
+                    == NodeTypes.LEO_SATELLITE
+                    and self.previous_topology.get_sat_plane(sat) == next_plane
                 ]
             )
         )
-
+    
         if not self._los_between_satellites(satellite, candidate_next_plane):
             return self.get_closer_sat_next_plane(satellite)
 

@@ -1,9 +1,7 @@
 from datetime import datetime
-import json
-import yaml
 from pathlib import Path
 from flask import Flask, Response
-from flask import request, jsonify
+from flask import request
 from topology_builder.builder.min_distance_topology_builder import MinimumDistanceTopologyBuilder
 from topology_builder.repository.satellite_repository import STKLeoSatelliteRepository
 
