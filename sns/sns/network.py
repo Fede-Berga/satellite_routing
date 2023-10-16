@@ -20,6 +20,12 @@ class NodeTypes(str, Enum):
     LEO_SATELLITE = "LEO_SATELLITE"
 
 
+ARRIVAL_DIST = 0.010  # seconds
+SIZE_DIST = 1_500  # bytes
+SATELLITE_SWITCH_PORT_RATE = 10_000_000  # 10_000_000 # MB/S
+SATELLITE_SWITCH_BUFFER_SIZE = 100  # 60_000_000 # MB
+
+
 class Network:
     def __init__(self, graph: nx.DiGraph) -> None:
         self.graph = graph
@@ -68,8 +74,8 @@ class Network:
                 pg = DistPacketGenerator(
                     env,
                     target,
-                    lambda: 1.5,
-                    lambda: 100.0,
+                    lambda: ARRIVAL_DIST,
+                    lambda: SIZE_DIST,
                     flow_id=int(str(i) + str(j)),
                     debug=False,
                 )
@@ -84,8 +90,8 @@ class Network:
             info["switch"] = SimplePacketSwitch(
                 env=env,
                 nports=self.graph.out_degree[node],
-                port_rate=8000,
-                buffer_size=8000,
+                port_rate=SATELLITE_SWITCH_PORT_RATE,
+                buffer_size=SATELLITE_SWITCH_BUFFER_SIZE,
                 element_id=node,
             )
 
@@ -177,14 +183,18 @@ class Network:
                     new_port = next(iter(free_ports))
                     if new_port >= len(s_info["switch"].ports):
                         s_info["switch"].ports.append(
-                            Port(env,
-                            rate=8000,
-                            qlimit=8000,
-                            limit_bytes=False,
-                            element_id=f"{source}_{new_port}",
-                            debug=False)
+                            Port(
+                                env,
+                                rate=SATELLITE_SWITCH_PORT_RATE,
+                                qlimit=SATELLITE_SWITCH_BUFFER_SIZE,
+                                limit_bytes=False,
+                                element_id=f"{source}_{new_port}",
+                                debug=False,
+                            )
                         )
-                        s_info["switch"].demux = FIBDemux(fib=None, outs=s_info["switch"].ports, default=None)
+                        s_info["switch"].demux = FIBDemux(
+                            fib=None, outs=s_info["switch"].ports, default=None
+                        )
 
                     delay_dist = self.graph[source][target]["length"] / (
                         constants.c / 1000
@@ -255,6 +265,76 @@ class Network:
                         ] = self.graph[prev_hop][hop]["out_port"]
 
                     prev_hop = hop
+
+    def dump_status(self):
+        # dump gs_s
+        for source, info in self.get_GSs():
+            print(f"{source}-sent")
+            for target, pg in list(info["packet_generator"].items())[:-1]:
+                print(f"    │")
+                print(
+                    f"    ├ --flow : {pg.flow_id}-> {target}, packets sent : {pg.packets_sent}"
+                )
+            target, pg = list(info["packet_generator"].items())[-1]
+            print(f"    │")
+            print(
+                f"    └ --flow : {pg.flow_id}-> {target}, packets sent : {pg.packets_sent}"
+            )
+            print(f"{source}-received")
+            for flow_id, n_packets in list(
+                info["packet_sink"].packets_received.items()
+            )[:-1]:
+                print(f"    │")
+                print(
+                    f"    ├ --flow : {flow_id}-> {source}, packets received : {n_packets}"
+                )
+            if len(list(info["packet_sink"].packets_received.items())) <= 1:
+                continue
+            flow_id, n_packets in list(info["packet_sink"].packets_received.items())[-1]
+            print(f"    │")
+            print(f"    └ --flow : {flow_id}, packets received : {n_packets}")
+
+        # dump leo_sats
+        print("\n")
+        for sat, sat_info in self.get_leo_satellites():
+            if all([port.packets_received == 0 for port in sat_info["switch"].ports]):
+                continue
+            print(
+                f"\n{sat}, total number of packets arrived: {sat_info['switch'].demux.packets_received}"
+            )
+            for i, port in enumerate(sat_info["switch"].ports):
+                if port.packets_received == 0:
+                    continue
+                target = None
+                for adj, adj_info in self.graph.adj[sat].items():
+                    if adj_info["out_port"] == i:
+                        target = adj
+                        break
+                print(f"    │")
+                print(f"    ├ -- out_port: {i}                             ")
+                print(f"    ├ -- packets_received: {port.packets_received}     ")
+                print(
+                    f"    ├ -- packets_sent: {port.packets_received - port.packets_dropped - int(port.byte_size / SIZE_DIST)}     "
+                )
+                print(f"    ├ -- packets_dropped: {port.packets_dropped}   ")
+                print(
+                    f"    ├ -- buffer size in packets: {int(port.byte_size / SIZE_DIST)}    "
+                )
+                print(f"    ├ -- flows on this port")
+                for flow_id, out_port in sat_info["switch"].demux.fib.items():
+                    if out_port != i:
+                        continue
+
+                    s, t = None, None
+                    for u, info in self.get_GSs():
+                        for v, pg in list(info["packet_generator"].items()):
+                            if pg.flow_id == flow_id:
+                                s, t = u, v
+                                break
+                        if s != None and t != None:
+                            break
+                    print(f"        ├ -- flow: {s} --{flow_id}--> {t}")
+                print(f"    ├ --> {target}")
 
     @classmethod
     def from_json(cls, env: simpy.Environment, file: Path) -> Self:

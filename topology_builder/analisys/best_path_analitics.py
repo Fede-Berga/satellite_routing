@@ -114,11 +114,9 @@ def collect_sp_analitics(
 
             if str(p) not in shortest_path_analitics[s][t].keys():
                 shortest_path_analitics[s][t][str(p)] = {
-                    "len_hops": nx.shortest_path_length(
-                        G=current_topology.ntwk, source=s, target=t
-                    ),
-                    "len_km": nx.shortest_path_length(
-                        G=current_topology.ntwk, source=s, target=t, weight="length"
+                    "len_hops": len(p),
+                    "len_km": nx.path_weight(
+                        G=current_topology.ntwk, path=p, weight="length"
                     ),
                     "duration": 0,
                 }
@@ -172,11 +170,14 @@ def plot_average_distance_of_sp(
     builder: type[LOSTopologyBuilder | MinimumDistanceTopologyBuilder],
     shortest_path_analitics,
     hopcount: bool = False,
+    metric: str = "distance",
 ):
     x_labels = list(combinations(shortest_path_analitics.keys(), 2))
     y_labels = [
         sum(
-            shortest_path_analitics[s][t][path]["len_hops" if hopcount else "len_km"]
+            shortest_path_analitics[s][t][path][
+                "len_km" if metric == "distance" else "len_hops"
+            ]
             for path in shortest_path_analitics[s][t].keys()
         )
         / len(shortest_path_analitics[s][t].keys())
@@ -197,18 +198,23 @@ def plot_average_distance_of_sp(
         color=next(get_shuffled_matplotlib_colors()),
         linestyle="dashed",
         linewidth=1,
-        label=f"{builder.__name__}, \nmean : {round(mean_path_dist, 2)} {'hops' if hopcount else 'km'}",
+        label=f"{builder.__name__}, \nmean : {round(mean_path_dist, 2)} {'km' if  metric == 'distance' else 'hops'}",
     )
 
 
 if __name__ == "__main__":
     _, start_time, end_time, _, _, gs_s = fetch_simulation_parameters("./config.yaml")
 
-    mdFile = MdUtils(file_name='s_t_couple_index',title='Ground Station Index-Couple')
+    mdFile = MdUtils(file_name="s_t_couple_index", title="Ground Station Index-Couple")
     list_of_strings = ["Index", "s", "t"]
     for i, (s, t) in enumerate(list(combinations(gs_s, 2))):
-        list_of_strings.extend([i, s['name'], t['name']])
-    mdFile.new_table(columns=3, rows=len(list(combinations(gs_s, 2))) + 1, text=list_of_strings, text_align='center')
+        list_of_strings.extend([i, s["name"], t["name"]])
+    mdFile.new_table(
+        columns=3,
+        rows=len(list(combinations(gs_s, 2))) + 1,
+        text=list_of_strings,
+        text_align="center",
+    )
     mdFile.create_md_file()
 
     builders = [LOSTopologyBuilder, MinimumDistanceTopologyBuilder]
@@ -241,12 +247,10 @@ if __name__ == "__main__":
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         plt.xlabel("s, t")
-        plt.ylabel("Average duration of best path from s to t")
-        plt.title(
-            f"Average duration of best path calculated with {builder.__name__} from s to t in {sim_duration} seconds of simulation."
-        )
-        # plt.savefig("images/adbp")
-        plt.show()
+        plt.ylabel("Average duration in seconds of best path from s to t")
+        title = f"Average duration in seconds of best path from s to t calculated with {builder.__name__} and varying metrics in {sim_duration} seconds of simulation."
+        plt.title(title)
+        plt.savefig(f"images/duration/{'_'.join(title.lower().split())}")
 
     # -------------------------------------------
     # Average Duration same metric different builder
@@ -265,15 +269,13 @@ if __name__ == "__main__":
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         plt.xlabel("s, t")
-        plt.ylabel("Average duration of best path from s to t")
-        plt.title(
-            f"Average duration of best path calculated with {'hopcount' if hopcount else 'distance'} from s to t in {sim_duration} seconds of simulation."
-        )
-        # plt.savefig("images/adbp")
-        plt.show()
+        plt.ylabel("Average duration in seconds of best path from s to t")
+        title = f"Average duration in seconds of best path from s to t calculated with {'hopcount' if hopcount else 'distance'} metric and varying Builder in {sim_duration} seconds of simulation."
+        plt.title(title)
+        plt.savefig(f"images/duration/{'_'.join(title.lower().split())}")
 
     # -------------------------------------------
-    # Average length same metric different builder
+    # Average length same Builder different metric
 
     for builder in builders:
         plt.figure(figsize=(15, 8))
@@ -288,15 +290,13 @@ if __name__ == "__main__":
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         plt.xlabel("s, t")
-        plt.ylabel("Average distance of best path from s to t")
-        plt.title(
-            f"Average duration of best path calculated with {'hopcount' if hopcount else 'distance'} from s to t in {sim_duration} seconds of simulation."
-        )
-        # plt.savefig("images/adbp")
-        plt.show()
+        plt.ylabel("Average distance in km of best path from s to t")
+        title = f"Average distance in km of best path from s to t calculated with \n{builder.__name__} and varying metrics in {sim_duration} seconds of simulation."
+        plt.title(title)
+        plt.savefig(f"images/distance/{'_'.join(title.lower().split())}")
 
     # -------------------------------------------
-    # Average length same builder different metric
+    # Average length same Metric different Builder
 
     for hopcount in [True, False]:
         plt.figure(figsize=(15, 8))
@@ -311,9 +311,51 @@ if __name__ == "__main__":
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         plt.xlabel("s, t")
-        plt.ylabel("Average duration of best path from s to t")
-        plt.title(
-            f"Average duration of best path calculated with {builder.__name__} from s to t in {sim_duration} seconds of simulation."
-        )
-        # plt.savefig("images/adbp")
-        plt.show()
+        plt.ylabel("Average distance in km of best path from s to t")
+        title = f"Average distance in km of best path from s to t calculated with \n{'hopcount' if hopcount else 'distance'} metric and varying builder in {sim_duration} seconds of simulation."
+        plt.title(title)
+        plt.savefig(f"images/distance/{'_'.join(title.lower().split())}")
+
+    # -------------------------------------------
+    # Average length same Builder different metric
+
+    for builder in builders:
+        plt.figure(figsize=(15, 8))
+        ax = plt.subplot()
+        for hopcount in [True, False]:
+            plot_average_distance_of_sp(
+                builder=builder,
+                shortest_path_analitics=shortest_path_analitics[str(builder)][hopcount],
+                hopcount=hopcount,
+                metric="hopcount",
+            )
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        plt.xlabel("s, t")
+        plt.ylabel("Average distance in hops of best path from s to t")
+        title = f"Average distance in hops of best path from s to t calculated with \n{builder.__name__} and varying metrics in {sim_duration} seconds of simulation."
+        plt.title(title)
+        plt.savefig(f"images/distance/{'_'.join(title.lower().split())}")
+
+    # -------------------------------------------
+    # Average length same Metric different Builder
+
+    for hopcount in [True, False]:
+        plt.figure(figsize=(15, 8))
+        ax = plt.subplot()
+        for builder in builders:
+            plot_average_distance_of_sp(
+                builder=builder,
+                shortest_path_analitics=shortest_path_analitics[str(builder)][hopcount],
+                hopcount=hopcount,
+                metric="hopcount",
+            )
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+        plt.xlabel("s, t")
+        plt.ylabel("Average distance in hops of best path from s to t")
+        title = f"Average distance in hops of best path from s to t calculated with \n{'hopcount' if hopcount else 'distance'} metric and varying builder in {sim_duration} seconds of simulation."
+        plt.title(title)
+        plt.savefig(f"images/distance/{'_'.join(title.lower().split())}")

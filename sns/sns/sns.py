@@ -22,9 +22,10 @@ def run_sns_simulation(
             old_ntwk=old_ntwk
         )
 
-        print(now)
+        env.run(until=((now - start_time) + snapshot_duration).seconds)# * 1000)
 
-        env.run(until=((now - start_time) + snapshot_duration).seconds * 1000)
+        #print(f"\n--------- Status at {now} ----------")
+        #ntwk.dump_status()
 
         old_ntwk = ntwk
 

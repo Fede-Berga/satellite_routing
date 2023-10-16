@@ -1,9 +1,10 @@
 import random
-from typing import List, Tuple
+from typing import List, Self, Tuple
 import networkx as nx, json
 from skyfield.api import wgs84, Time
 import matplotlib.pyplot as plt
-#from mpl_toolkits.basemap import Basemap
+
+# from mpl_toolkits.basemap import Basemap
 import numpy as np
 from itertools import chain, cycle
 import matplotlib.colors as mcolors
@@ -22,8 +23,8 @@ class Topology:
     def __str__(self) -> str:
         nx_data = nx.node_link_data(self.ntwk)
 
-        for node in nx_data['nodes']:
-            del node['skyfield_obj']
+        for node in nx_data["nodes"]:
+            del node["skyfield_obj"]
 
         dict_graph = {
             "name": self.name,
@@ -90,7 +91,15 @@ class Topology:
     def get_node_lat_lon(self, node: str):
         lat, long = wgs84.latlon_of(self.ntwk.nodes[node]["skyfield_obj"].at(self.t))
         return lat.degrees, long.degrees
+
+    def is_different(self, other: Self):
+        return nx.is_empty(nx.difference(other.ntwk, self.ntwk)) or nx.is_empty(
+            nx.difference(self.ntwk, other.ntwk)
+        )
     
+    def get_diff_graph(self, other: Self) -> nx.Graph:
+        return nx.difference(other.ntwk, self.ntwk)
+
     """
 
     def _plot_edges(self, edges: List[Tuple[str, str]], color=None):
