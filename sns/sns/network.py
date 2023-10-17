@@ -1,6 +1,7 @@
 import copy
 from enum import Enum
 import json
+import sys
 from typing import Any, List, Self, Tuple, Dict
 from pathlib import Path
 import requests
@@ -13,6 +14,7 @@ from ns.port.port import Port
 from ns.demux.fib_demux import FIBDemux
 import simpy
 from scipy import constants
+import matplotlib.pyplot as plt
 
 
 class NodeTypes(str, Enum):
@@ -22,8 +24,8 @@ class NodeTypes(str, Enum):
 
 ARRIVAL_DIST = 0.010  # seconds
 SIZE_DIST = 1_500  # bytes
-SATELLITE_SWITCH_PORT_RATE = 10_000_000  # 10_000_000 # MB/S
-SATELLITE_SWITCH_BUFFER_SIZE = 100  # 60_000_000 # MB
+SATELLITE_SWITCH_PORT_RATE = 10_000_000  # bytes/s
+SATELLITE_SWITCH_BUFFER_SIZE = 100  # Packets
 
 
 class Network:
@@ -335,6 +337,83 @@ class Network:
                             break
                     print(f"        ├ -- flow: {s} --{flow_id}--> {t}")
                 print(f"    ├ --> {target}")
+
+    def dump_routing_info(self) -> None:
+        for source, info in self.get_GSs():
+            print(f"{source}")
+            for target, pg in list(info["packet_generator"].items())[:-1]:
+                print(f"    │")
+                print(f"    ├ --flow : {pg.flow_id}-> {target}")
+            target, pg = list(info["packet_generator"].items())[-1]
+            print(f"    │")
+            print(f"    └ --flow : {pg.flow_id}-> {target}")
+        print("\n")
+        for sat, sat_info in self.get_leo_satellites():
+            if sat_info["switch"].demux.fib == None:
+                continue
+            print(f"{sat}")
+            for flow, port in sat_info["switch"].demux.fib.items():
+                target = None
+                for v, edge_info in self.graph.adj[sat].items():
+                    if edge_info["out_port"] == port:
+                        target = v
+                        break
+
+                print(f"    │")
+                print(f"    ├ --port : {port}, flow : {flow} --> {target}")
+
+    def nx_plot(self) -> None:
+        G = self.graph.copy()
+
+        G.remove_nodes_from(
+            [
+                sat
+                for sat, sat_info in self.get_leo_satellites()
+                if sat_info["switch"].demux.fib == None
+            ]
+        )
+
+        edges_to_remove = []
+        for node, n_d in G.nodes(data=True):
+            if n_d["type"] == NodeTypes.GROUD_STATION:
+                for u, v in G.edges(node):
+                    edges_to_remove.append((u, v))
+                continue
+            for u, v, d in G.edges(node, data=True):
+                if d["out_port"] not in n_d["switch"].demux.fib.values():
+                    edges_to_remove.append((u, v))
+                else:
+                    new_info = {
+                        (u, v): {
+                            "out_port": d["out_port"],
+                            "flows": [
+                                flow
+                                for flow, port in n_d["switch"].demux.fib.items()
+                                if port == d["out_port"]
+                            ],
+                        }
+                    }
+                    d.clear()
+                    nx.set_edge_attributes(G, new_info)
+
+        G.remove_edges_from(edges_to_remove)
+
+        edge_port = dict(
+            [((n1, n2), d["out_port"]) for n1, n2, d in G.edges(data=True)]
+        )
+
+        node_name = dict(
+            [
+                (n, n[-2:]) if d["type"] == NodeTypes.LEO_SATELLITE else (n, n[:2])
+                for n, d in G.nodes(data=True)
+            ]
+        )
+        plt.figure(figsize=(12, 8))
+        pos = nx.spring_layout(G, k=4, iterations=500)
+        nx.draw_networkx_nodes(G, pos, node_size=500)
+        nx.draw_networkx_edges(G, pos, connectionstyle="arc3, rad = 0.2")
+        nx.draw_networkx_labels(G, pos, labels=node_name)
+        plt.show()
 
     @classmethod
     def from_json(cls, env: simpy.Environment, file: Path) -> Self:

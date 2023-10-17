@@ -4,7 +4,7 @@ import networkx as nx, json
 from skyfield.api import wgs84, Time
 import matplotlib.pyplot as plt
 
-# from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 import numpy as np
 from itertools import chain, cycle
 import matplotlib.colors as mcolors
@@ -100,7 +100,7 @@ class Topology:
     def get_diff_graph(self, other: Self) -> nx.Graph:
         return nx.difference(other.ntwk, self.ntwk)
 
-    """
+"""
 
     def _plot_edges(self, edges: List[Tuple[str, str]], color=None):
         for u, v in edges:
@@ -160,8 +160,6 @@ class Topology:
         plt.show()
 
     def draw_paths(self, paths: List[List[str]]) -> None:
-        plt.figure(figsize=(8, 6))
-
         m = Basemap(
             projection="cyl",
             resolution=None,
@@ -178,6 +176,4 @@ class Topology:
         for path in paths:
             edges = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
             self._plot_edges(edges, color=next(colors))
-
-        plt.show()
     """

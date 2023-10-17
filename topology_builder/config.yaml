@@ -32,7 +32,7 @@ ground_stations :
 output_file : './results/iridium_static_status.json'
 t : "2023-09-01 13:20:30 +00:00"
 start_time : "2023-09-01 10:00:00 +00:00"
-end_time : "2023-09-01 11:00:00 +00:00"
+end_time : "2023-09-01 10:00:20 +00:00"
 dt : 1000
 
 

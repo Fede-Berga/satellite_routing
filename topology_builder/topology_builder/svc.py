@@ -11,19 +11,13 @@ app = Flask(__name__)
 @app.route("/topology_builder/min_dist_topo_builder/<string:topo_name>")
 def hello_world(topo_name: str):
     t = request.args.get('t')
+    no_gs_s = int(request.args.get('no_gs_s'))
     config_file = 'config.yaml'
 
     with open(config_file, "r") as yamlfile:
         config = yaml.load(yamlfile, Loader=yaml.FullLoader)
     
-    gs_s = config["ground_stations"]
-
-    # gs_s = [
-    #         {"name": "Tokyo", "lat": 35.652832, "lon": 139.839478},
-    #         {"name": "Melbourne", "lat": -37.840935, "lon": 144.946457},
-    #         {"name": "London", "lat": 51.509865, "lon": -0.118092},
-    #         {"name": "Sao_Paulo", "lat": -23.533773, "lon": -46.625290},
-    #     ]
+    gs_s = config["ground_stations"][:no_gs_s]
 
     network = (
             MinimumDistanceTopologyBuilder(

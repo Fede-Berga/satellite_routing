@@ -8,6 +8,8 @@ class TestSns:
 
     def test_sns(self):
 
+        print('\n')
+
         run_sns_simulation(
             env=simpy.Environment(),
             svc_url="http://localhost:8000/topology_builder/min_dist_topo_builder/iridium",
