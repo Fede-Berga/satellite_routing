@@ -1,6 +1,7 @@
 from collections import defaultdict as dd
 import datetime
 from itertools import cycle
+import math
 import os
 from pathlib import Path
 import random
@@ -137,6 +138,7 @@ if __name__ == "__main__":
     for builder in builders:
         analitics[builder.__name__] = collect_sp_analitics(builder)
     
+    
     # Topology Stability Through time
     plt.figure(figsize=(15, 8))
     ax = plt.subplot()
@@ -171,6 +173,7 @@ if __name__ == "__main__":
     plt.title(title)
     plt.savefig(f"images/stability/{'_'.join(title.lower().split())}")
     #plt.show()
+    
 
     # plot stability Frequences
     plt.figure(figsize=(15, 8))
@@ -180,10 +183,14 @@ if __name__ == "__main__":
 
         labels = [duration for duration in stability_analitics.values()]
 
+        mean = sum(labels) / len(labels)
+
+        sample_variance = sum([(duration - mean) ** 2 for duration in labels]) / (len(labels) - 1)
+
         plt.hist(
             labels,
             alpha=0.5,
-            label=builder.__name__,
+            label=f"{builder.__name__},\nsamplevariance: {sample_variance}",
         )
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -194,6 +201,7 @@ if __name__ == "__main__":
     plt.title(title)
     plt.savefig(f"images/stability/{'_'.join(title.lower().split())}")
     #plt.show()
+
     
     # Average link length through time
     plt.figure(figsize=(15, 8))
@@ -228,7 +236,8 @@ if __name__ == "__main__":
     plt.title(title)
     #plt.show()
     plt.savefig(f"images/avg_link_len/{'_'.join(title.lower().split())}")
-
+    
+    
     # Frequences of link length through time
     plt.figure(figsize=(15, 8))
     ax = plt.subplot()
@@ -237,10 +246,14 @@ if __name__ == "__main__":
         
         labels = [avg_len for avg_len in average_link_length.values()]
 
+        mean = sum(labels) / len(labels)
+
+        sample_variance = sum([(avg_len - mean) ** 2 for avg_len in labels]) / (len(labels) - 1)
+
         plt.hist(
             labels,
             alpha=0.5,
-            label=builder.__name__,
+            label=f"{builder.__name__},\nsamplevariance: {sample_variance}",
         )
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
@@ -251,6 +264,7 @@ if __name__ == "__main__":
     plt.title(title)
     #plt.show()
     plt.savefig(f"images/avg_link_len/{'_'.join(title.lower().split())}")
+
 
     # Link Change through time
     plt.figure(figsize=(15, 8))
@@ -286,6 +300,7 @@ if __name__ == "__main__":
     #plt.show()
     plt.savefig(f"images/link_change/{'_'.join(title.lower().split())}")
 
+
     # Frequences of Link Change
     plt.figure(figsize=(15, 8))
     ax = plt.subplot()
@@ -294,10 +309,14 @@ if __name__ == "__main__":
 
         labels = [n_changes for n_changes in link_changes.values()]
 
+        mean = sum(labels) / len(labels)
+
+        sample_variance = sum([(n_changes - mean) ** 2 for n_changes in labels]) / (len(labels) - 1)
+
         plt.hist(
             labels,
             alpha=0.5,
-            label=builder.__name__,
+            label=f"{builder.__name__},\nsamplevariance: {sample_variance}",
         )
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
