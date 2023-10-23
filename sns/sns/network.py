@@ -1,9 +1,6 @@
-import copy
 from enum import Enum
 import json
-import sys
-from typing import Any, List, Self, Tuple, Dict
-from pathlib import Path
+from typing import Any, List, Self, Tuple
 import requests
 import networkx as nx
 from ns.packet.dist_generator import DistPacketGenerator
