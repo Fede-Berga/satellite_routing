@@ -20,18 +20,13 @@ def run_sns_simulation(
 
         ntwk = Network.from_topology_builder_svc(
             env=env,
-            svc_url=f"{svc_url}?t={now.strftime('%Y-%m-%d %H:%M:%S %z').replace('+', '%2B')}&no_gs_s=3",
+            svc_url=f"{svc_url}?t={now.strftime('%Y-%m-%d %H:%M:%S %z').replace('+', '%2B')}&no_gs_s=4",
             old_ntwk=old_ntwk
         )
 
-        #ntwk.nx_plot()
-        #print(ntwk)
-        #ntwk.dump_routing_info() 
+        env.run(until=((now - start_time) + snapshot_duration).seconds)
 
-        env.run(until=((now - start_time) + snapshot_duration).seconds)# * 1000)
-
-        #print(f"\n--------- Status at {now} ----------")
-        #ntwk.dump_status()
+        ntwk.dump_status()
 
         old_ntwk = ntwk
 
