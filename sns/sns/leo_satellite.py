@@ -30,6 +30,12 @@ class LeoSatellite:
     #def __repr__(self) -> str:
     #    return self.__str__()
 
+    def packets_sent(self) -> int:
+        return sum([port.packets_received - port.packets_dropped - int(port.byte_size / 1500) for port in self.out_ports.values()])
+    
+    def port_drop(self) -> int:
+        return sum([port.packets_dropped for port in self.out_ports.values()])
+
     def run(self):
         yield self.env.timeout(self.setup_delay)
         while True:

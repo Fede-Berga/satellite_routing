@@ -14,6 +14,7 @@ from scipy import constants
 import matplotlib.pyplot as plt
 from sns.leo_satellite import LeoSatellite
 from sns.packet_generator import PacketGenerator
+from sns.sr_header_builder import SourceRoutingHeaderBuilder
 
 
 class NodeTypes(str, Enum):
@@ -21,12 +22,13 @@ class NodeTypes(str, Enum):
     LEO_SATELLITE = "LEO_SATELLITE"
 
 
-ARRIVAL_DIST = 0.010  # seconds
+ARRIVAL_DIST = 0.01  # seconds
 SIZE_DIST = 1_500  # bytes
-SATELLITE__PORT_RATE = 10_000_000  # bytes/s
-SATELLITE_ISL_QUEUE_SIZE = 100  # Packets
-SATELLITE_GSL_QUEUE_SIZE = 100  # Packets
-LINK_SWITCH_DELAY = 2  # seconds
+SATELLITE__PORT_RATE = 1_000_000 # bytes/s
+SATELLITE_ISL_QUEUE_SIZE = 1000
+SATELLITE_GSL_QUEUE_SIZE = 1000 
+LINK_SWITCH_DELAY = 0.1  # seconds
+LIMIT_BYTES = False
 
 
 class Network:
@@ -83,17 +85,19 @@ class Network:
                     src_gs_info["packet_generator"] = dict()
 
                 if old_ntwk:
-                    pg = old_ntwk.graph.nodes[src_gs]["packet_generator"][dst_gs]
+                    pg: PacketGenerator = old_ntwk.graph.nodes[src_gs]["packet_generator"][dst_gs]
+                    pg.sr_header_builder = SourceRoutingHeaderBuilder.instance(self.graph)
                 else:
                     pg = PacketGenerator(
                         env=env,
                         src=src_gs,
                         dst=dst_gs,
+                        sr_header_builder = SourceRoutingHeaderBuilder.instance(self.graph),
                         arrival_dist=lambda: ARRIVAL_DIST,
                         size_dist=lambda: SIZE_DIST,
                         debug=debug,
                     )
-
+                
                 src_gs_info["packet_generator"][dst_gs] = pg
 
         # Set sat network object
@@ -136,7 +140,7 @@ class Network:
                             env=env,
                             rate=SATELLITE__PORT_RATE,
                             qlimit=queue_size,
-                            limit_bytes=True,
+                            limit_bytes=LIMIT_BYTES,
                             debug=debug,
                         )
 
@@ -164,7 +168,7 @@ class Network:
                         element_id=f"{src_satellite}->{dst_satellite}",
                         rate=SATELLITE__PORT_RATE,
                         qlimit=queue_size,
-                        limit_bytes=True,
+                        limit_bytes=LIMIT_BYTES,
                         debug=debug,
                     )
 
@@ -218,14 +222,20 @@ class Network:
             if sat_info["leo_satellite"].packets_received == 0:
                 continue
             print(
-                f"\n{sat}"
+                f"{sat}"
             )
             print(f"    │")
             print(
                 f"    │-total number of packets arrived: {sat_info['leo_satellite'].packets_received}"
             )
             print(
-                f"    │-total number of packets dropped for routing issues: {sat_info['leo_satellite'].port_not_found_drops}"
+                f"    │-total number of packets sent: {sat_info['leo_satellite'].packets_sent()}"
+            )
+            print(
+                f"    │-number of packets dropped for routing issues: {sat_info['leo_satellite'].port_not_found_drops}"
+            )
+            print(
+                f"    │-number of packets dropped for port issues: {sat_info['leo_satellite'].port_drop()}"
             )
             if all([port.packets_received == 0 for port in sat_info["leo_satellite"].out_ports.values()]):
                 continue

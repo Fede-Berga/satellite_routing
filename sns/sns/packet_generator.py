@@ -1,6 +1,7 @@
 from ns.packet.packet import Packet
 import simpy
 from typing import Callable
+from sns.sr_header_builder import SourceRoutingHeaderBuilder
 
 
 class PacketGenerator:
@@ -9,6 +10,7 @@ class PacketGenerator:
         env: simpy.Environment,
         src: str,
         dst: str,
+        sr_header_builder: SourceRoutingHeaderBuilder,
         arrival_dist: Callable,
         size_dist: Callable,
         initial_delay=0,
@@ -24,6 +26,7 @@ class PacketGenerator:
         self.finish = finish
         self.src = src
         self.dst = dst
+        self.sr_header_builder = sr_header_builder
 
         self.out = None
         self.packets_sent = 0
@@ -35,10 +38,8 @@ class PacketGenerator:
         self.debug = debug
 
     def run(self):
-        """The generator function used in simulations."""
         yield self.env.timeout(self.initial_delay)
         while self.env.now < self.finish:
-            # wait for next transmission
             yield self.env.timeout(self.arrival_dist())
 
             self.packets_sent += 1
@@ -49,7 +50,9 @@ class PacketGenerator:
                 packet_id=self.packets_sent,
                 src=self.src,
                 dst=self.dst,
-                payload=list()
+                payload=self.sr_header_builder.get_route_list_of_ports(
+                    src_gs=self.src, dst_gs=self.dst
+                ),
             )
 
             if self.rec_flow:
