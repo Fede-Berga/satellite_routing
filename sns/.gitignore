@@ -281,5 +281,7 @@ $RECYCLE.BIN/
 # Ad Hoc
 
 *__pycache__
+images
+analytics
 
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,virtualenv,macos,windows,linux

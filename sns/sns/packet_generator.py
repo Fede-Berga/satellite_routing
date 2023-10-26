@@ -50,7 +50,7 @@ class PacketGenerator:
                 packet_id=self.packets_sent,
                 src=self.src,
                 dst=self.dst,
-                payload=self.sr_header_builder.get_route_list_of_ports(
+                payload=self.sr_header_builder.get_sr_header(
                     src_gs=self.src, dst_gs=self.dst
                 ),
             )

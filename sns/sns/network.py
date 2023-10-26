@@ -3,16 +3,12 @@ import json
 from typing import Any, List, Self, Tuple
 import requests
 import networkx as nx
-from ns.packet.dist_generator import DistPacketGenerator
 from ns.packet.sink import PacketSink
-from ns.switch.switch import SimplePacketSwitch
 from ns.port.wire import Wire
 from ns.port.port import Port
-from ns.demux.fib_demux import FIBDemux
 import simpy
 from scipy import constants
-import matplotlib.pyplot as plt
-from sns.leo_satellite import LeoSatellite
+from sns.leo_satellite import LeoSatellite, ForwardingStrategy
 from sns.packet_generator import PacketGenerator
 from sns.sr_header_builder import SourceRoutingHeaderBuilder
 
@@ -22,11 +18,11 @@ class NodeTypes(str, Enum):
     LEO_SATELLITE = "LEO_SATELLITE"
 
 
-ARRIVAL_DIST = 0.01  # seconds
+ARRIVAL_DIST = 0.05  # seconds
 SIZE_DIST = 1_500  # bytes
-SATELLITE__PORT_RATE = 1_000_000 # bytes/s
+SATELLITE__PORT_RATE = 1_000_000  # bytes/s
 SATELLITE_ISL_QUEUE_SIZE = 1000
-SATELLITE_GSL_QUEUE_SIZE = 1000 
+SATELLITE_GSL_QUEUE_SIZE = 1000
 LINK_SWITCH_DELAY = 0.1  # seconds
 LIMIT_BYTES = False
 
@@ -66,7 +62,11 @@ class Network:
         )
 
     def __build(
-        self, env: simpy.Environment, old_ntwk: Self | None = None, debug: bool = False
+        self,
+        env: simpy.Environment,
+        old_ntwk: Self | None = None,
+        packet_forwarding_strategy: ForwardingStrategy = ForwardingStrategy.PORT_FORWARDING,
+        debug: bool = False,
     ) -> Self:
         # Set sink
         for gs, gs_info in self.get_GSs():
@@ -85,19 +85,25 @@ class Network:
                     src_gs_info["packet_generator"] = dict()
 
                 if old_ntwk:
-                    pg: PacketGenerator = old_ntwk.graph.nodes[src_gs]["packet_generator"][dst_gs]
-                    pg.sr_header_builder = SourceRoutingHeaderBuilder.instance(self.graph)
+                    pg: PacketGenerator = old_ntwk.graph.nodes[src_gs][
+                        "packet_generator"
+                    ][dst_gs]
+                    pg.sr_header_builder = SourceRoutingHeaderBuilder.instance(
+                        self.graph
+                    )
                 else:
                     pg = PacketGenerator(
                         env=env,
                         src=src_gs,
                         dst=dst_gs,
-                        sr_header_builder = SourceRoutingHeaderBuilder.instance(self.graph),
+                        sr_header_builder=SourceRoutingHeaderBuilder.instance(
+                            self.graph
+                        ),
                         arrival_dist=lambda: ARRIVAL_DIST,
                         size_dist=lambda: SIZE_DIST,
                         debug=debug,
                     )
-                
+
                 src_gs_info["packet_generator"][dst_gs] = pg
 
         # Set sat network object
@@ -108,12 +114,16 @@ class Network:
                 ]
             else:
                 satellite_info["leo_satellite"] = LeoSatellite(
-                    env=env, element_id=satellite, out_ports=dict(), link_switch_delay=dict()
+                    env=env,
+                    element_id=satellite,
+                    packet_forwarding_strategy=packet_forwarding_strategy,
+                    out_ports=dict(),
+                    out_sat_or_gs=dict(),
+                    link_switch_delay=dict(),
                 )
 
         # isl wire, downstream gsl wire
         for src_satellite, satellite_info in self.get_leo_satellites():
-
             src_satellite_network_object: LeoSatellite = satellite_info["leo_satellite"]
 
             for out_port_number, dst_satellite in enumerate(
@@ -144,11 +154,14 @@ class Network:
                             debug=debug,
                         )
 
+                        src_satellite_network_object.out_sat_or_gs[out_port_number] = dst_satellite
+
                         lsd = LINK_SWITCH_DELAY
                     else:
                         dst_ntwk_network_object = (
                             self.graph.nodes[dst_satellite]["leo_satellite"]
-                            if self.graph.nodes[dst_satellite]["type"] == NodeTypes.LEO_SATELLITE
+                            if self.graph.nodes[dst_satellite]["type"]
+                            == NodeTypes.LEO_SATELLITE
                             else self.graph.nodes[dst_satellite]["packet_sink"]
                         )
 
@@ -161,7 +174,9 @@ class Network:
                             else LINK_SWITCH_DELAY
                         )
 
-                    src_satellite_network_object.link_switch_delay[out_port_number] = lsd
+                    src_satellite_network_object.link_switch_delay[
+                        out_port_number
+                    ] = lsd
                 else:
                     src_satellite_network_object.out_ports[out_port_number] = Port(
                         env=env,
@@ -172,12 +187,15 @@ class Network:
                         debug=debug,
                     )
 
+                    src_satellite_network_object.out_sat_or_gs[out_port_number] = dst_satellite
+
                     src_satellite_network_object.link_switch_delay[out_port_number] = 0
 
                 src_satellite_network_object.out_ports[out_port_number].out = wire
                 wire.out = (
                     self.graph.nodes[dst_satellite]["leo_satellite"]
-                    if self.graph.nodes[dst_satellite]["type"] == NodeTypes.LEO_SATELLITE
+                    if self.graph.nodes[dst_satellite]["type"]
+                    == NodeTypes.LEO_SATELLITE
                     else self.graph.nodes[dst_satellite]["packet_sink"]
                 )
 
@@ -185,7 +203,9 @@ class Network:
         for src_gs, src_gs_info in self.get_GSs():
             upstream_sat = next(iter(list(self.graph.adj[src_gs])))
 
-            delay_dist = self.graph[src_gs][upstream_sat]["length"] / (constants.c / 1000)
+            delay_dist = self.graph[src_gs][upstream_sat]["length"] / (
+                constants.c / 1000
+            )
 
             wire = Wire(
                 env,
@@ -221,9 +241,7 @@ class Network:
         for sat, sat_info in self.get_leo_satellites():
             if sat_info["leo_satellite"].packets_received == 0:
                 continue
-            print(
-                f"{sat}"
-            )
+            print(f"{sat}")
             print(f"    │")
             print(
                 f"    │-total number of packets arrived: {sat_info['leo_satellite'].packets_received}"
@@ -232,14 +250,21 @@ class Network:
                 f"    │-total number of packets sent: {sat_info['leo_satellite'].packets_sent()}"
             )
             print(
-                f"    │-number of packets dropped for routing issues: {sat_info['leo_satellite'].port_not_found_drops}"
+                f"    │-number of packets dropped for routing issues: {sat_info['leo_satellite'].routing_issues_drops}"
             )
             print(
                 f"    │-number of packets dropped for port issues: {sat_info['leo_satellite'].port_drop()}"
             )
-            if all([port.packets_received == 0 for port in sat_info["leo_satellite"].out_ports.values()]):
+            if all(
+                [
+                    port.packets_received == 0
+                    for port in sat_info["leo_satellite"].out_ports.values()
+                ]
+            ):
                 continue
-            for out_port_number, out_port in sat_info['leo_satellite'].out_ports.items():
+            for out_port_number, out_port in sat_info[
+                "leo_satellite"
+            ].out_ports.items():
                 if out_port.packets_received == 0:
                     continue
                 print(f"    │")
@@ -256,7 +281,11 @@ class Network:
 
     @classmethod
     def from_topology_builder_svc(
-        cls, env: simpy.Environment, svc_url: str, old_ntwk: Self = None
+        cls, 
+        env: simpy.Environment, 
+        svc_url: str, 
+        old_ntwk: Self = None,
+        packet_forwarding_strategy: ForwardingStrategy = ForwardingStrategy.PORT_FORWARDING,
     ) -> Self:
         data = requests.get(url=svc_url).json()
 
@@ -264,4 +293,8 @@ class Network:
 
         ntwk = cls(graph=nx.DiGraph(nx.node_link_graph(nx_obj)))
 
-        return ntwk.__build(env, old_ntwk)
+        return ntwk.__build(
+            env=env, 
+            old_ntwk=old_ntwk, 
+            packet_forwarding_strategy=packet_forwarding_strategy
+        )
