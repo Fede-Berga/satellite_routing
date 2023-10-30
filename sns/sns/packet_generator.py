@@ -1,7 +1,10 @@
 from ns.packet.packet import Packet
 import simpy
+import networkx as nx
 from typing import Callable
-from sns.sr_header_builder import SourceRoutingHeaderBuilder
+from datetime import timedelta
+import sns.sr_header_builder as snshb
+import sns.network_parameters as snsnp
 
 
 class PacketGenerator:
@@ -10,7 +13,7 @@ class PacketGenerator:
         env: simpy.Environment,
         src: str,
         dst: str,
-        sr_header_builder: SourceRoutingHeaderBuilder,
+        graph: nx.digraph,
         arrival_dist: Callable,
         size_dist: Callable,
         initial_delay=0,
@@ -26,8 +29,11 @@ class PacketGenerator:
         self.finish = finish
         self.src = src
         self.dst = dst
-        self.sr_header_builder = sr_header_builder
+        self.graph = graph
+        self.timeout_routing_update = 1 # seconds
 
+        self.sr_header_builder = None
+        self.last_timeout_routing_update = env.now
         self.out = None
         self.packets_sent = 0
         self.action = env.process(self.run())
@@ -36,6 +42,10 @@ class PacketGenerator:
         self.time_rec = []
         self.size_rec = []
         self.debug = debug
+    
+    def __update_routing_info(self) -> None:
+       yield self.env.timeout(snsnp.NetworkParameters.LEO_GEO_GS_TD)
+       self.sr_header_builder = snshb.SourceRoutingHeaderBuilder.instance(self.graph)
 
     def run(self):
         yield self.env.timeout(self.initial_delay)
@@ -43,6 +53,9 @@ class PacketGenerator:
             yield self.env.timeout(self.arrival_dist())
 
             self.packets_sent += 1
+
+            if not self.sr_header_builder:
+                self.sr_header_builder = snshb.SourceRoutingHeaderBuilder.instance(self.graph)
 
             packet = Packet(
                 time=self.env.now,
@@ -54,6 +67,10 @@ class PacketGenerator:
                     src_gs=self.src, dst_gs=self.dst
                 ),
             )
+
+            if self.env.now - self.last_timeout_routing_update > self.timeout_routing_update:
+                self.env.process(self.__update_routing_info())
+                self.last_timeout_routing_update = self.env.now 
 
             if self.rec_flow:
                 self.time_rec.append(packet.time)

@@ -1,5 +1,25 @@
 services:
   topology_builder:
     build: ./topology_builder
+    env_file:
+      - ./topology_builder/.env
+    environment:
+      - CITY_SVC_API_KEY_FILE=/run/secrets/city_api_key
     ports:
       - "8000:8000"
+    secrets:
+      - city_api_key
+  traffic_matrix_generator:
+    build: ./traffic_matrix_generator
+    env_file:
+      - ./traffic_matrix_generator/.env
+    environment:
+      - CITY_SVC_API_KEY_FILE=/run/secrets/city_api_key
+    ports:
+      - "8001:8000"
+    secrets:
+      - city_api_key
+
+secrets:
+  city_api_key:
+    file: ./city_api_key.txt

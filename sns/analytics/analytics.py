@@ -4,37 +4,26 @@ import pytz
 import sys
 import os
 import matplotlib.pyplot as plt
+import yaml
 
 sys.path.append(os.path.abspath("../sns"))
 from sns.sns import run_sns_simulation
 from sns.leo_satellite import ForwardingStrategy
-
-
-def collect_analitics(
-    env: simpy.Environment,
-    svc_url: str,
-    start_time: datetime,
-    end_time: datetime,
-    snapshot_duration: timedelta,
-    forwarding_strategy: ForwardingStrategy,
-):
-    return run_sns_simulation(
-        env=env,
-        svc_url=svc_url,
-        start_time=start_time,
-        end_time=end_time,
-        snapshot_duration=snapshot_duration,
-        forwarding_strategy=forwarding_strategy,
-    )
+import sns.network_parameters as ntwkparams
 
 
 if __name__ == "__main__":
-    svc_url = "http://localhost:8000/topology_builder/min_dist_topo_builder/iridium"
+    topology_builder_svc_url = (
+        "http://localhost:8000/topology_builder/min_dist_topo_builder/iridium"
+    )
+    traffic_matrix_svc_url = (
+        "http://localhost:8001/traffic_matrix"
+    )
     start_time = datetime(
         year=2023, month=9, day=12, hour=10, minute=0, second=0, tzinfo=pytz.UTC
     )
     end_time = datetime(
-        year=2023, month=9, day=12, hour=11, minute=0, second=0, tzinfo=pytz.UTC
+        year=2023, month=9, day=12, hour=10, minute=10, second=0, tzinfo=pytz.UTC
     )
     snapshot_duration = timedelta(seconds=1)
 
@@ -42,12 +31,18 @@ if __name__ == "__main__":
         ForwardingStrategy.PORT_FORWARDING,
         ForwardingStrategy.EARLY_DISCARDING,
     ]
+
     analytics = dict()
 
+    with open(ntwkparams.NetworkParameters.CITIES_FILE_PATH, "r") as cities_file:
+        cities = yaml.load(cities_file, Loader=yaml.FullLoader)["cities"]
+
     for forwarding_strategy in forwarding_strategies:
-        analytics[forwarding_strategy] = collect_analitics(
+        analytics[forwarding_strategy] = run_sns_simulation(
             env=simpy.Environment(),
-            svc_url=svc_url,
+            topology_builder_svc_url=topology_builder_svc_url,
+            traffic_matrix_svc_url=traffic_matrix_svc_url,
+            cities=cities,
             start_time=start_time,
             end_time=end_time,
             snapshot_duration=snapshot_duration,
@@ -55,9 +50,7 @@ if __name__ == "__main__":
         )
 
     for forwarding_strategy in forwarding_strategies:
-        print(
-            f"\n{str(forwarding_strategy)}"
-        )
+        print(f"\n{str(forwarding_strategy)}")
         print(
             f"Total number of packets sent: {list(analytics[forwarding_strategy][4].values())[-1]}"
         )
@@ -80,6 +73,7 @@ if __name__ == "__main__":
             f"Number of packets dropped for buffer issues w.r.t. total number of packets sent: {list(analytics[forwarding_strategy][3].values())[-1] / list(analytics[forwarding_strategy][4].values())[-1]}"
         )
 
+    """
     plt.figure(figsize=(15, 8))
     ax = plt.subplot()
     for forwarding_strategy in forwarding_strategies:
@@ -260,3 +254,4 @@ if __name__ == "__main__":
         title = f"Number of packets sent and delivered occupation using strategy {str(forwarding_strategy)} of Iridium NEXT in a simulation \nstarted at {start_time}, lasted {(end_time - start_time).seconds} seconds."
         plt.title(title)
         plt.savefig(f"images/{'_'.join(title.lower().split())}")
+        """

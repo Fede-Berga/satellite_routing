@@ -1,6 +1,6 @@
 from enum import Enum
 import json
-from typing import Any, List, Self, Tuple
+from typing import Any, List, Self, Tuple, Dict
 import requests
 import networkx as nx
 from ns.packet.sink import PacketSink
@@ -8,23 +8,14 @@ from ns.port.wire import Wire
 from ns.port.port import Port
 import simpy
 from scipy import constants
-from sns.leo_satellite import LeoSatellite, ForwardingStrategy
-from sns.packet_generator import PacketGenerator
-from sns.sr_header_builder import SourceRoutingHeaderBuilder
+import sns.leo_satellite as snsleo
+import sns.packet_generator as snspg
+import sns.network_parameters as snsntwkparams
 
 
 class NodeTypes(str, Enum):
     GROUD_STATION = "GROUD_STATION"
     LEO_SATELLITE = "LEO_SATELLITE"
-
-
-ARRIVAL_DIST = 0.05  # seconds
-SIZE_DIST = 1_500  # bytes
-SATELLITE__PORT_RATE = 1_000_000  # bytes/s
-SATELLITE_ISL_QUEUE_SIZE = 1000
-SATELLITE_GSL_QUEUE_SIZE = 1000
-LINK_SWITCH_DELAY = 0.1  # seconds
-LIMIT_BYTES = False
 
 
 class Network:
@@ -64,8 +55,9 @@ class Network:
     def __build(
         self,
         env: simpy.Environment,
+        traffic_matrix: Dict[str, Dict[str, float]],
         old_ntwk: Self | None = None,
-        packet_forwarding_strategy: ForwardingStrategy = ForwardingStrategy.PORT_FORWARDING,
+        packet_forwarding_strategy: snsleo.ForwardingStrategy = snsleo.ForwardingStrategy.PORT_FORWARDING,
         debug: bool = False,
     ) -> Self:
         # Set sink
@@ -85,22 +77,20 @@ class Network:
                     src_gs_info["packet_generator"] = dict()
 
                 if old_ntwk:
-                    pg: PacketGenerator = old_ntwk.graph.nodes[src_gs][
+                    pg: snspg.PacketGenerator = old_ntwk.graph.nodes[src_gs][
                         "packet_generator"
                     ][dst_gs]
-                    pg.sr_header_builder = SourceRoutingHeaderBuilder.instance(
-                        self.graph
-                    )
+                    pg.graph = self.graph
+
                 else:
-                    pg = PacketGenerator(
+                    ad = snsntwkparams.NetworkParameters.PACKET_SIZE / traffic_matrix[src_gs][dst_gs]
+                    pg = snspg.PacketGenerator(
                         env=env,
                         src=src_gs,
                         dst=dst_gs,
-                        sr_header_builder=SourceRoutingHeaderBuilder.instance(
-                            self.graph
-                        ),
-                        arrival_dist=lambda: ARRIVAL_DIST,
-                        size_dist=lambda: SIZE_DIST,
+                        graph=self.graph,
+                        arrival_dist=lambda: ad,
+                        size_dist=lambda: snsntwkparams.NetworkParameters.PACKET_SIZE,
                         debug=debug,
                     )
 
@@ -113,7 +103,7 @@ class Network:
                     "leo_satellite"
                 ]
             else:
-                satellite_info["leo_satellite"] = LeoSatellite(
+                satellite_info["leo_satellite"] = snsleo.LeoSatellite(
                     env=env,
                     element_id=satellite,
                     packet_forwarding_strategy=packet_forwarding_strategy,
@@ -124,7 +114,9 @@ class Network:
 
         # isl wire, downstream gsl wire
         for src_satellite, satellite_info in self.get_leo_satellites():
-            src_satellite_network_object: LeoSatellite = satellite_info["leo_satellite"]
+            src_satellite_network_object: snsleo.LeoSatellite = satellite_info[
+                "leo_satellite"
+            ]
 
             for out_port_number, dst_satellite in enumerate(
                 list(self.graph.adj[src_satellite])
@@ -138,25 +130,21 @@ class Network:
                     delay_dist=lambda: delay_dist,
                 )
 
-                queue_size = (
-                    SATELLITE_ISL_QUEUE_SIZE
-                    if self.graph.nodes[dst_satellite] == NodeTypes.LEO_SATELLITE
-                    else SATELLITE_GSL_QUEUE_SIZE
-                )
-
                 if old_ntwk:
+                    src_satellite_network_object.out_sat_or_gs[
+                        out_port_number
+                    ] = dst_satellite
+
                     if out_port_number not in src_satellite_network_object.out_ports:
                         src_satellite_network_object.out_ports[out_port_number] = Port(
                             env=env,
-                            rate=SATELLITE__PORT_RATE,
-                            qlimit=queue_size,
-                            limit_bytes=LIMIT_BYTES,
+                            rate=snsntwkparams.NetworkParameters.SATELLITE_PORT_RATE,
+                            qlimit=snsntwkparams.NetworkParameters.SATELLITE_QUEUE_SIZE,
+                            limit_bytes=snsntwkparams.NetworkParameters.LIMIT_BYTES,
                             debug=debug,
                         )
 
-                        src_satellite_network_object.out_sat_or_gs[out_port_number] = dst_satellite
-
-                        lsd = LINK_SWITCH_DELAY
+                        lsd = snsntwkparams.NetworkParameters.LINK_SWITCH_DELAY
                     else:
                         dst_ntwk_network_object = (
                             self.graph.nodes[dst_satellite]["leo_satellite"]
@@ -171,7 +159,7 @@ class Network:
                                 out_port_number
                             ].out.out
                             == dst_ntwk_network_object
-                            else LINK_SWITCH_DELAY
+                            else snsntwkparams.NetworkParameters.LINK_SWITCH_DELAY
                         )
 
                     src_satellite_network_object.link_switch_delay[
@@ -181,13 +169,15 @@ class Network:
                     src_satellite_network_object.out_ports[out_port_number] = Port(
                         env=env,
                         element_id=f"{src_satellite}->{dst_satellite}",
-                        rate=SATELLITE__PORT_RATE,
-                        qlimit=queue_size,
-                        limit_bytes=LIMIT_BYTES,
+                        rate=snsntwkparams.NetworkParameters.SATELLITE_PORT_RATE,
+                        qlimit=snsntwkparams.NetworkParameters.SATELLITE_QUEUE_SIZE,
+                        limit_bytes=snsntwkparams.NetworkParameters.LIMIT_BYTES,
                         debug=debug,
                     )
 
-                    src_satellite_network_object.out_sat_or_gs[out_port_number] = dst_satellite
+                    src_satellite_network_object.out_sat_or_gs[
+                        out_port_number
+                    ] = dst_satellite
 
                     src_satellite_network_object.link_switch_delay[out_port_number] = 0
 
@@ -272,29 +262,30 @@ class Network:
                 print(f"    ├ -- id: {out_port.element_id} ")
                 print(f"    ├ -- packets_received: {out_port.packets_received}")
                 print(
-                    f"    ├ -- packets_sent: {out_port.packets_received - out_port.packets_dropped - int(out_port.byte_size / SIZE_DIST)}     "
+                    f"    ├ -- packets_sent: {out_port.packets_received - out_port.packets_dropped - int(out_port.byte_size / snsntwkparams.NetworkParameters.PACKET_SIZE)}"
                 )
                 print(f"    ├ -- packets_dropped: {out_port.packets_dropped}   ")
                 print(
-                    f"    ├ -- buffer size in packets: {int(out_port.byte_size / SIZE_DIST)}    "
+                    f"    ├ -- buffer size in bytes: {int(out_port.byte_size)}"
                 )
 
     @classmethod
     def from_topology_builder_svc(
-        cls, 
-        env: simpy.Environment, 
-        svc_url: str, 
+        cls,
+        env: simpy.Environment,
+        topology_builder_svc_url: str,
+        traffic_matrix: Dict[str, Dict[str, float]],
         old_ntwk: Self = None,
-        packet_forwarding_strategy: ForwardingStrategy = ForwardingStrategy.PORT_FORWARDING,
+        packet_forwarding_strategy: snsleo.ForwardingStrategy = snsleo.ForwardingStrategy.PORT_FORWARDING,
     ) -> Self:
-        data = requests.get(url=svc_url).json()
+        topology_builder_svc_data = requests.get(url=topology_builder_svc_url).json()
 
-        nx_obj = data["networkx_obj"]
-
+        nx_obj = topology_builder_svc_data["networkx_obj"]
         ntwk = cls(graph=nx.DiGraph(nx.node_link_graph(nx_obj)))
 
         return ntwk.__build(
-            env=env, 
-            old_ntwk=old_ntwk, 
-            packet_forwarding_strategy=packet_forwarding_strategy
+            env=env,
+            traffic_matrix=traffic_matrix,
+            old_ntwk=old_ntwk,
+            packet_forwarding_strategy=packet_forwarding_strategy,
         )
