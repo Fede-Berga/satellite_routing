@@ -1,7 +1,7 @@
 import json
 import os
 import pathlib
-import sys
+from typing import List
 from flask import Flask, Response
 from flask import request
 import requests
@@ -15,17 +15,13 @@ CITY_SVC_API_KEY = pathlib.Path(os.environ.get('CITY_SVC_API_KEY_FILE')).read_te
 
 @app.route("/traffic_matrix")
 def traffic_matrix():
-    cities: str = [city.strip() for city in request.args.get("cities").split(',')]
+    cities: List[str] = [city.strip() for city in request.args.get("cities").split(',')]
     total_volume_of_traffic = float(request.args.get("total_volume_of_traffic"))
-
-    print(cities, file=sys.stderr)
 
     for i, city in enumerate(cities):
         response = requests.get(
             f"{BASE_CITY_API_URL}?name={city}", headers={"X-Api-Key": CITY_SVC_API_KEY}
         )
-
-        print(response.json(), file=sys.stderr)
 
         cities[i] = response.json()[0]
     

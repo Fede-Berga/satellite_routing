@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
 import simpy
-import yaml
 from sns.network import Network
 from sns.leo_satellite import ForwardingStrategy, LeoSatellite
 import sns.network_parameters as ntwkparams
 from typing import Any, List
 from collections import defaultdict as dd
 import requests
-
+import time
 
 def run_sns_simulation(
     env: simpy.Environment,
@@ -44,14 +43,21 @@ def run_sns_simulation(
             packet_forwarding_strategy=forwarding_strategy,
         )
 
+        import time
+        s_time = time.time()
+        
         env.run(until=((now - start_time) + snapshot_duration).seconds)
 
+        print("--- %s seconds ---" % (time.time() - s_time))
+
+        ntwk.dump_status()
+        
         for _, satellite_info in ntwk.get_leo_satellites():
             leo_satellite: LeoSatellite = satellite_info["leo_satellite"]
 
             average_buffer_occupation[(now - start_time).seconds] += sum(
                 [
-                    int(port.byte_size / 1500)
+                    int(port.byte_size / ntwkparams.NetworkParameters.PACKET_SIZE)
                     for port in leo_satellite.out_ports.values()
                 ]
             ) / len(leo_satellite.out_ports.values())

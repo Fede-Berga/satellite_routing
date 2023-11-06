@@ -23,7 +23,7 @@ if __name__ == "__main__":
         year=2023, month=9, day=12, hour=10, minute=0, second=0, tzinfo=pytz.UTC
     )
     end_time = datetime(
-        year=2023, month=9, day=12, hour=10, minute=10, second=0, tzinfo=pytz.UTC
+        year=2023, month=9, day=12, hour=10, minute=0, second=10, tzinfo=pytz.UTC
     )
     snapshot_duration = timedelta(seconds=1)
 

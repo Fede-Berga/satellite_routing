@@ -168,7 +168,7 @@ class Network:
                 else:
                     src_satellite_network_object.out_ports[out_port_number] = Port(
                         env=env,
-                        element_id=f"{src_satellite}->{dst_satellite}",
+                        element_id=0 if self.graph.nodes[dst_satellite]["type"] == NodeTypes.LEO_SATELLITE else 1,
                         rate=snsntwkparams.NetworkParameters.SATELLITE_PORT_RATE,
                         qlimit=snsntwkparams.NetworkParameters.SATELLITE_QUEUE_SIZE,
                         limit_bytes=snsntwkparams.NetworkParameters.LIMIT_BYTES,

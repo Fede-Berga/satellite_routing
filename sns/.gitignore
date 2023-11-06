@@ -283,5 +283,6 @@ $RECYCLE.BIN/
 *__pycache__
 images
 analytics/*.txt
+*.c
 
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,virtualenv,macos,windows,linux
