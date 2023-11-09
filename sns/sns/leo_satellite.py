@@ -56,28 +56,48 @@ class LeoSatellite:
             )
 
             if (header_out_port, header_out_satellite_or_gs) != (None, None):
-                if self.packet_forwarding_strategy == ForwardingStrategy.PORT_FORWARDING:
+                if (
+                    self.packet_forwarding_strategy
+                    == ForwardingStrategy.PORT_FORWARDING
+                ):
                     if header_out_port in self.out_ports:
-                        self.env.process(self.process_packet(packet, port=header_out_port))
+                        link_setup_time = 0
+                        if self.link_switch_delay[header_out_port] != 0:
+                            link_setup_time = self.link_switch_delay[header_out_port]
+                            self.link_switch_delay[header_out_port] = 0
+                        self.env.process(
+                            self.process_packet(
+                                packet,
+                                port=header_out_port,
+                                link_setup_time=link_setup_time,
+                            )
+                        )
                     else:
                         self.routing_issues_drops += 1
                 else:
                     if header_out_satellite_or_gs in self.out_sat_or_gs.values():
-                        self.env.process(self.process_packet(packet, port=header_out_port))
+                        link_setup_time = 0
+                        if self.link_switch_delay[header_out_port] != 0:
+                            link_setup_time = self.link_switch_delay[header_out_port]
+                            self.link_switch_delay[header_out_port] = 0
+                        self.env.process(
+                            self.process_packet(
+                                packet,
+                                port=header_out_port,
+                                link_setup_time=link_setup_time,
+                            )
+                        )
                     else:
                         self.routing_issues_drops += 1
             else:
-                self.routing_issues_drops += 1  
+                self.routing_issues_drops += 1
 
-    def process_packet(self, packet: Packet, port: int) -> None:
-        if (
-            self.link_switch_delay[port] != 0
-            and self.env.now <= self.link_switch_delay[port]
-        ):
+    def process_packet(self, packet: Packet, port: int, link_setup_time: float) -> None:
+        if link_setup_time != 0:
             print(
-                f"waiting on port {port}, packet {packet.flow_id} for {self.link_switch_delay[port] - self.env.now}"
+                f"{self.element_id}: waiting on port {port}, packet {packet.flow_id} for {link_setup_time}"
             )
-            yield self.env.timeout(self.link_switch_delay[port] - self.env.now)
+            yield self.env.timeout(link_setup_time)
         self.out_ports[port].put(packet)
 
     def put(self, packet):

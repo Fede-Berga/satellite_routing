@@ -1,10 +1,9 @@
 from ns.packet.packet import Packet
 import simpy
 import networkx as nx
-from typing import Callable
-from datetime import timedelta
-import sns.sr_header_builder as snshb
+from typing import Callable, Union
 import sns.network_parameters as snsnp
+import sns.sr_header_builder as srhb
 
 
 class PacketGenerator:
@@ -14,6 +13,12 @@ class PacketGenerator:
         src: str,
         dst: str,
         graph: nx.digraph,
+        srhb_class: Union[
+            srhb.BaselineSourceRoutingHeaderBuilder,
+            srhb.NoSmoothingOnBufferSizeSourceRoutingHeaderBuilder,
+            srhb.ExponentialSmoothingOnBufferSizeSourceRoutingHeaderBuilder,
+            srhb.KShortestNodeDisjointSourceRoutingHeaderBuilder,
+        ],
         arrival_dist: Callable,
         size_dist: Callable,
         initial_delay=0,
@@ -30,8 +35,9 @@ class PacketGenerator:
         self.src = src
         self.dst = dst
         self.graph = graph
-        self.timeout_routing_update = 1 # seconds
+        self.srhb_class = srhb_class
 
+        self.timeout_routing_update = 1  # seconds
         self.sr_header_builder = None
         self.last_timeout_routing_update = env.now
         self.out = None
@@ -42,10 +48,10 @@ class PacketGenerator:
         self.time_rec = []
         self.size_rec = []
         self.debug = debug
-    
+
     def __update_routing_info(self) -> None:
-       yield self.env.timeout(snsnp.NetworkParameters.LEO_GEO_GS_TD)
-       self.sr_header_builder = snshb.SourceRoutingHeaderBuilder.instance(self.graph)
+        yield self.env.timeout(snsnp.NetworkParameters.LEO_GEO_GS_TD)
+        self.sr_header_builder = self.srhb_class.instance(self.graph)
 
     def run(self):
         yield self.env.timeout(self.initial_delay)
@@ -55,7 +61,7 @@ class PacketGenerator:
             self.packets_sent += 1
 
             if not self.sr_header_builder:
-                self.sr_header_builder = snshb.SourceRoutingHeaderBuilder.instance(self.graph)
+                self.sr_header_builder = self.srhb_class.instance(self.graph)
 
             packet = Packet(
                 time=self.env.now,
@@ -68,9 +74,12 @@ class PacketGenerator:
                 ),
             )
 
-            if self.env.now - self.last_timeout_routing_update > self.timeout_routing_update:
+            if (
+                self.env.now - self.last_timeout_routing_update
+                > self.timeout_routing_update
+            ):
                 self.env.process(self.__update_routing_info())
-                self.last_timeout_routing_update = self.env.now 
+                self.last_timeout_routing_update = self.env.now
 
             if self.rec_flow:
                 self.time_rec.append(packet.time)

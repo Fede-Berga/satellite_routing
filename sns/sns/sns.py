@@ -3,10 +3,11 @@ import simpy
 from sns.network import Network
 from sns.leo_satellite import ForwardingStrategy, LeoSatellite
 import sns.network_parameters as ntwkparams
-from typing import Any, List
+from typing import Any, List, Union
 from collections import defaultdict as dd
 import requests
 import time
+import sns.sr_header_builder as srhb
 
 def run_sns_simulation(
     env: simpy.Environment,
@@ -17,6 +18,12 @@ def run_sns_simulation(
     end_time: datetime,
     snapshot_duration: timedelta,
     forwarding_strategy: ForwardingStrategy,
+    srhb_class: Union[
+        srhb.BaselineSourceRoutingHeaderBuilder,
+        srhb.NoSmoothingOnBufferSizeSourceRoutingHeaderBuilder,
+        srhb.ExponentialSmoothingOnBufferSizeSourceRoutingHeaderBuilder,
+        srhb.KShortestNodeDisjointSourceRoutingHeaderBuilder,
+    ] = srhb.BaselineSourceRoutingHeaderBuilder,
 ) -> Any:
     now = start_time
     old_ntwk = None
@@ -35,22 +42,24 @@ def run_sns_simulation(
     while now <= end_time:
         print(f"\nRunning simulation at {now}")
 
+        s_time = time.time()
+
         ntwk = Network.from_topology_builder_svc(
             env=env,
             topology_builder_svc_url=f"{topology_builder_svc_url}?t={now.strftime('%Y-%m-%d %H:%M:%S %z').replace('+', '%2B')}&cities={','.join(cities)}",
             traffic_matrix=traffic_matrix,
             old_ntwk=old_ntwk,
             packet_forwarding_strategy=forwarding_strategy,
+            srhb_class=srhb_class
         )
 
-        import time
-        s_time = time.time()
+        print("--- Building took %s seconds ---" % (time.time() - s_time))
         
         env.run(until=((now - start_time) + snapshot_duration).seconds)
 
-        print("--- %s seconds ---" % (time.time() - s_time))
+        print("--- Simulating took %s seconds ---" % (time.time() - s_time))
 
-        ntwk.dump_status()
+        #ntwk.dump_status()
         
         for _, satellite_info in ntwk.get_leo_satellites():
             leo_satellite: LeoSatellite = satellite_info["leo_satellite"]

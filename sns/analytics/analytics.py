@@ -10,6 +10,7 @@ sys.path.append(os.path.abspath("../sns"))
 from sns.sns import run_sns_simulation
 from sns.leo_satellite import ForwardingStrategy
 import sns.network_parameters as ntwkparams
+import sns.sr_header_builder as srhb
 
 
 if __name__ == "__main__":
@@ -23,7 +24,7 @@ if __name__ == "__main__":
         year=2023, month=9, day=12, hour=10, minute=0, second=0, tzinfo=pytz.UTC
     )
     end_time = datetime(
-        year=2023, month=9, day=12, hour=10, minute=0, second=10, tzinfo=pytz.UTC
+        year=2023, month=9, day=12, hour=10, minute=10, second=0, tzinfo=pytz.UTC
     )
     snapshot_duration = timedelta(seconds=1)
 
@@ -47,6 +48,7 @@ if __name__ == "__main__":
             end_time=end_time,
             snapshot_duration=snapshot_duration,
             forwarding_strategy=forwarding_strategy,
+            srhb_class=srhb.KShortestNodeDisjointSourceRoutingHeaderBuilder
         )
 
     for forwarding_strategy in forwarding_strategies:
