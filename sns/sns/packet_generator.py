@@ -51,7 +51,9 @@ class PacketGenerator:
 
     def __update_routing_info(self) -> None:
         yield self.env.timeout(snsnp.NetworkParameters.LEO_GEO_GS_TD)
-        self.sr_header_builder = self.srhb_class.instance(self.graph)
+        self.sr_header_builder = self.srhb_class.instance(
+            self.env, self.graph, self.timeout_routing_update
+        )
 
     def run(self):
         yield self.env.timeout(self.initial_delay)
@@ -61,7 +63,9 @@ class PacketGenerator:
             self.packets_sent += 1
 
             if not self.sr_header_builder:
-                self.sr_header_builder = self.srhb_class.instance(self.graph)
+                self.sr_header_builder = self.srhb_class.instance(
+                    self.env, self.graph, self.timeout_routing_update
+                )
 
             packet = Packet(
                 time=self.env.now,

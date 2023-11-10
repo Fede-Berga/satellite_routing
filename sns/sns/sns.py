@@ -59,7 +59,7 @@ def run_sns_simulation(
 
         print("--- Simulating took %s seconds ---" % (time.time() - s_time))
 
-        #ntwk.dump_status()
+        ntwk.dump_status()
         
         for _, satellite_info in ntwk.get_leo_satellites():
             leo_satellite: LeoSatellite = satellite_info["leo_satellite"]

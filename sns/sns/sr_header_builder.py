@@ -11,19 +11,28 @@ from networkx.algorithms.connectivity import build_auxiliary_node_connectivity
 from networkx.classes.function import path_weight
 import random
 import numpy as np
+from collections import defaultdict as dd
+from datetime import datetime
+import simpy
 
 
 class BaselineSourceRoutingHeaderBuilder:
     _instance: Self = None
     _graph: nx.DiGraph = None
+    _last_update: int = None
 
     def __init__(self):
         raise RuntimeError("Call instance() instead")
 
     def get_sr_header(self, src_gs: str, dst_gs: str) -> List[Tuple[int, str]]:
+
+        s_time = time.time()
+
         sp = nx.shortest_path(
             G=self._graph, source=src_gs, target=dst_gs, weight="weight"
         )
+
+        #print("--- Simple shortest path took %s seconds ---" % (time.time() - s_time))
 
         port_list = [
             self._graph.edges[sp[i], sp[i + 1]]["out_port"]
@@ -64,13 +73,16 @@ class BaselineSourceRoutingHeaderBuilder:
                     break
 
     @classmethod
-    def instance(cls, graph: nx.DiGraph):
+    def instance(cls, env: simpy.Environment, graph: nx.DiGraph, update_freq: int):
         # print('instance BaselineSourceRoutingHeaderBuilder')
         if cls._instance is None:
             cls._instance = super(BaselineSourceRoutingHeaderBuilder, cls).__new__(cls)
-
-        cls._instance._copy_graph_structure(graph)
-        cls._instance._set_up_graph_copy_for_routing(graph)
+        
+        if cls._last_update == None or (env.now - cls._last_update) > update_freq:
+            #print(f'BaselineSourceRoutingHeaderBuilder: {cls._last_update}')
+            cls._instance._copy_graph_structure(graph)
+            cls._instance._set_up_graph_copy_for_routing(graph)
+            cls._last_update = env.now
 
         return cls._instance
 
@@ -136,41 +148,30 @@ class ExponentialSmoothingOnBufferSizeSourceRoutingHeaderBuilder(
 class KShortestNodeDisjointSourceRoutingHeaderBuilder(
     ExponentialSmoothingOnBufferSizeSourceRoutingHeaderBuilder
 ):
-    _auxiliary = None
-    _residual = None
+    _all_couples_shortest_paths = dd(dict)
 
     def get_sr_header(self, src_gs: str, dst_gs: str) -> List[Tuple[int, str]]:
-        src_sat = list(self._graph[src_gs].keys())[0]
-        dst_sat = list(self._graph[dst_gs].keys())[0]
+        s_time = time.time()
+        sp_s = self._all_couples_shortest_paths[src_gs][dst_gs]
 
-        if src_sat == dst_sat:
-            sp = [src_sat]
+        sp = None
+
+        if len(sp_s) == 1:
+            sp = sp_s[0]
         else:
-            s_time = time.time()
-            sp_s = list(
-                nx.node_disjoint_paths(
-                    self._graph,
-                    s=src_sat,
-                    t=dst_sat,
-                    auxiliary=self._auxiliary,
-                    residual=self._residual,
-                )
-            )
-            print("--- All node disjoint paths took %s seconds ---" % (time.time() - s_time))
-
-            total_path_weights = np.sum(
-                np.array([path_weight(self._graph, path, weight="weight") for path in sp_s])
+            total_path_weights = sum(
+                [path_weight(self._graph, path, weight="weight") for path in sp_s]
             )
 
-            weights = np.array([
-                1
-                - (path_weight(self._graph, path, weight="weight") / total_path_weights)
-                for path in sp_s
-            ])
+            weights = [
+                    1
+                    - (path_weight(self._graph, path, weight="weight") / total_path_weights)
+                    for path in sp_s
+                ]
 
             sp = random.choices(population=sp_s, weights=weights)[0]
-
-        sp = [src_gs] + sp + [dst_gs]
+        
+        #print("--- Extracting shortest path from cache %s seconds ---" % (time.time() - s_time))
 
         port_list = [
             self._graph.edges[sp[i], sp[i + 1]]["out_port"]
@@ -184,10 +185,54 @@ class KShortestNodeDisjointSourceRoutingHeaderBuilder(
         ]
 
     @classmethod
-    def instance(cls, graph: nx.DiGraph):
-        super().instance(graph)
-        cls._graph = cls._instance._graph
-        cls._auxiliary = build_auxiliary_node_connectivity(cls._graph)
-        cls._residual = build_residual_network(cls._auxiliary, "capacity")
+    def instance(cls, env: simpy.Environment, graph: nx.DiGraph, update_freq: int):
+        if cls._last_update == None or (env.now - cls._last_update) > update_freq:
+            super().instance(env, graph, update_freq)
+            cls._graph = cls._instance._graph
+            cls._last_update = cls._instance._last_update
+
+            s_time = time.time()
+
+            auxiliary = build_auxiliary_node_connectivity(cls._graph)
+            residual = build_residual_network(auxiliary, "capacity")
+
+            for src_gs, s_info in graph.nodes(data=True):
+                if s_info["type"] == snsntwk.NodeTypes.LEO_SATELLITE:
+                    continue
+                for dst_gs, t_info in graph.nodes(data=True):
+                    if (
+                        t_info["type"] == snsntwk.NodeTypes.LEO_SATELLITE
+                        or src_gs == dst_gs
+                    ):
+                        continue
+
+                    src_sat = list(cls._graph[src_gs].keys())[0]
+                    dst_sat = list(cls._graph[dst_gs].keys())[0]
+
+                    if src_sat == dst_sat:
+                        cls._all_couples_shortest_paths[src_gs][dst_gs] = [
+                            [src_gs, src_sat, dst_gs]
+                        ]
+                    else:
+                        sp_s = list(
+                            nx.node_disjoint_paths(
+                                cls._graph,
+                                s=src_sat,
+                                t=dst_sat,
+                                auxiliary=auxiliary,
+                                residual=residual,
+                            )
+                        )
+
+                        cls._all_couples_shortest_paths[src_gs][dst_gs] = [
+                            [src_gs] + sp + [dst_gs] for sp in sp_s
+                        ]
+
+            #print(json.dumps(cls._all_couples_shortest_paths, indent=4))
+            print(
+                "--- All node disjoint paths cache took %s seconds ---" % (time.time() - s_time)
+            )
+
+            cls._last_update = env.now
 
         return cls._instance
