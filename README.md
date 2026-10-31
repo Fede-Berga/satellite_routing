@@ -8,9 +8,9 @@ Simulation code for the M.Sc. thesis "A Simulation Study of Source Routing for L
 
 ## Problem and approach
 
-In a low Earth orbit (LEO) constellation the topology changes every few seconds: inter-satellite links are torn down and rebuilt as satellites move, and ground stations hand over from one satellite to the next. Shortest-path routing on such a network concentrates traffic on a few links. This project studies whether a ground-side, logically centralised controller can spread the load by computing the whole path of each packet (source routing) from a global view of link lengths and queue occupancy, and what happens to packets whose precomputed path no longer exists when they reach a satellite.
+In a low Earth orbit (LEO) constellation, inter-satellite links are torn down and rebuilt as satellites move, and ground stations hand over from one satellite to the next. This project studies whether a ground-side, logically centralised controller can spread the load by computing the whole path of each packet (source routing) from a global view of link lengths and queue occupancy, and what happens to packets whose precomputed path no longer exists when they reach a satellite.
 
-The constellation is a 66-satellite Iridium-like configuration (11 planes of 6 satellites) loaded from a TLE file. Satellite positions are propagated with [Skyfield](https://rhodesmill.org/skyfield/), the topology is a [NetworkX](https://networkx.org/) graph, and packet-level behaviour is a discrete-event simulation built on [SimPy](https://simpy.readthedocs.io/) through the [ns.py](https://github.com/TL-System/ns.py) port and wire models.
+The constellation is a synthetic Iridium-like configuration of 66 satellites (11 polar planes of 6 satellites) loaded from an STK-generated TLE file. Satellite positions are propagated with [Skyfield](https://rhodesmill.org/skyfield/), the topology is a [NetworkX](https://networkx.org/) graph, and packet-level behaviour is a discrete-event simulation built on [SimPy](https://simpy.readthedocs.io/) through the [ns.py](https://github.com/TL-System/ns.py) port and wire models.
 
 ## Architecture
 
@@ -18,14 +18,6 @@ The repository holds three Python components. Two are Flask services; the third,
 
 ```mermaid
 flowchart LR
-    TLE["constellations/Iridium_TLE.txt"] --> TB
-    CITYAPI["External city API (name, lat, lon, population)"] --> TB
-    CITYAPI --> TM
-    TB["topology_builder service (Skyfield, NetworkX), port 8000"]
-    TM["traffic_matrix_generator service (gravity model), port 8001"]
-    CITIES["cities.yaml"] --> SIM
-    TB -- "topology snapshot for time t (JSON)" --> SIM
-    TM -- "traffic matrix (JSON)" --> SIM
     subgraph SIM["sns simulator (SimPy + ns.py)"]
         PG["Packet generators, one per ground-station pair"] --> HB["Source-routing header builder (shared, global view)"]
         HB --> PG
@@ -33,13 +25,19 @@ flowchart LR
         SAT --> SINK["Ground-station packet sinks"]
         SAT -. "queue occupancy, refreshed every 1 s" .-> HB
     end
+    TLE["constellations/Iridium_TLE.txt"] --> TB["topology_builder service (Skyfield, NetworkX), port 8000"]
+    CITYAPI["External city API (name, lat, lon, population)"] --> TB
+    CITYAPI --> TM["traffic_matrix_generator service (gravity model), port 8001"]
+    CITIES["cities.yaml"] --> SIM
+    TB -- "topology snapshot for time t (JSON)" --> SIM
+    TM -- "traffic matrix (JSON)" --> SIM
 ```
 
 - **`topology_builder/`** builds the network graph at a given instant. Each satellite links to its two intra-plane neighbours and to the closest satellite in the next plane that is in line of sight (`MinimumDistanceTopologyBuilder`); each ground station links to the closest satellite above its horizon. `LOSTopologyBuilder` is a variant that keeps the previous inter-plane neighbour and ground-station satellite while they remain visible. The builders are exposed as a Typer CLI (`python -m topology_builder`) and as a Flask endpoint, `GET /topology_builder/min_dist_topo_builder/<name>?t=...&cities=...`.
 - **`traffic_matrix_generator/`** serves `GET /traffic_matrix?cities=...&total_volume_of_traffic=...`. Demand between two cities is proportional to the product of their population shares (a gravity model without the distance term).
 - **`sns/`** runs the simulation in 1-second snapshots. For each snapshot it fetches the topology, rebuilds the satellite network while keeping existing ports and queues, and advances the SimPy clock by one second. A link that did not exist in the previous snapshot adds a 0.1 s switching delay before its first packet.
 
-Routing happens in `sns/sns/sr_header_builder.py`. A single header-builder instance, shared by every packet generator, plays the role of the SDN controller: it copies the current graph, assigns a weight to each link and writes the full list of output ports and next hops into each packet. Its view is refreshed at most once per second, and refreshes requested by the generators are delayed by 0.35 s, modelling the ground-to-satellite control path. Four builders are implemented:
+Routing happens in `sns/sns/sr_header_builder.py`. A single header-builder instance, shared by every packet generator, plays the role of the SDN controller: it copies the current graph, assigns a weight to each link and writes the full list of output ports and next hops into each packet. Its view is refreshed at most once per second, and refreshes requested by the generators take effect after a fixed 0.35 s control delay (`LEO_GEO_GS_TD`). Four builders are implemented:
 
 | Builder | Link weight / path choice |
 | --- | --- |
@@ -52,7 +50,7 @@ Satellites forward with one of two strategies (`sns/sns/leo_satellite.py`). With
 
 ## Quick start
 
-Prerequisites: [uv](https://docs.astral.sh/uv/) and a C compiler only if you want the optional Cython build. Dependencies are pinned per component in `requirements.txt` files from 2023; the commands below were run with Python 3.12.
+Prerequisites: [uv](https://docs.astral.sh/uv/), which also installs Python 3.12. Each component pins its dependencies (from 2023) in its own `requirements.txt`.
 
 ### Build a topology snapshot (no services needed)
 
@@ -82,13 +80,21 @@ uv run --python 3.12 --with-requirements requirements.txt --with 'setuptools<81'
 
 `setuptools<81` is required because the pinned SimPy 4.0.2 imports `pkg_resources`. The script simulates 30 seconds from 2023-09-12 10:00 UTC with the node-disjoint builder, once per forwarding strategy, for the 11 cities in [`cities.yaml`](cities.yaml).
 
-Optionally, `uv run ... python cython_setup_sns.py build_ext --inplace` from `sns/` compiles the simulator modules with Cython. `setup_ns.py` and `setup_simpy.py` do the same for the ns.py and SimPy sources and must be copied into those projects' source trees to be used.
+Optionally, compile four of the simulator modules with Cython (needs a C compiler):
+
+```sh
+cd sns
+uv run --python 3.12 --with-requirements requirements.txt --with 'setuptools<81' \
+  python cython_setup_sns.py build_ext --inplace
+```
+
+`setup_ns.py` and `setup_simpy.py` do the same for ns.py and SimPy and must be copied into those projects' source trees.
 
 ## Output
 
 The repository contains no result data. `sns/analytics/analytics.py` prints, for each forwarding strategy, the packets sent, dropped and delivered, and the share of drops caused by stale routes versus full queues; `Network.dump_status()` prints per-satellite and per-port counters after every snapshot. The plotting code in that script is commented out.
 
-The two scripts in `topology_builder/analisys/` sweep the interval in `config.yaml` (one hour at 1 s steps) with both topology builders and save Matplotlib figures under `images/` (the subdirectories must exist): how long the topology stays unchanged, average link length, link changes per step, and the duration, length and hop count of the best path between each pair of ground stations. Both need `pyyaml`, and `best_path_analitics.py` also `mdutils`; neither is in `requirements.txt`.
+The scripts in `topology_builder/analisys/` sweep one hour at 1 s steps with both topology builders and save Matplotlib figures under `images/`: topology stability intervals, average link length, link changes per step, and the duration, length and hop count of the best path between ground stations. They also need `pyyaml` (and `mdutils` for `best_path_analitics.py`), which are not in `requirements.txt`.
 
 ## Running the tests
 
@@ -112,7 +118,7 @@ CI runs this suite on every push and pull request. The tests in `sns/test/` are 
 
 ## Citation
 
-If you use this code, please cite it using the metadata in [`CITATION.cff`](CITATION.cff); GitHub also offers it through the "Cite this repository" button.
+Citation metadata, including the thesis reference, are in [`CITATION.cff`](CITATION.cff).
 
 ## License
 
