@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+type: software
+title: "satellite_routing: simulation of source routing for load balancing in software-defined satellite networks"
+authors:
+  - family-names: Bergamini
+    given-names: Federico
+license: MIT
+repository-code: "https://github.com/Fede-Berga/satellite_routing"
+keywords:
+  - satellite networks
+  - LEO constellations
+  - software-defined networking
+  - source routing
+  - load balancing
+  - discrete-event simulation
+abstract: >-
+  Discrete-event simulator of a 66-satellite Iridium-like LEO constellation,
+  built with SimPy, ns.py and Skyfield. A ground-side controller computes
+  source routes from link lengths and exponentially smoothed queue occupancy,
+  refreshed every second, and the simulator compares port forwarding with
+  early discarding of packets whose route has become stale.
+references:
+  - type: thesis
+    title: "A Simulation Study of Source Routing for Load Balancing in Software-Defined Satellite Networks"
+    authors:
+      - family-names: Bergamini
+        given-names: Federico
+    institution:
+      name: "University of Milano-Bicocca"
+    year: 2024
+    thesis-type: "M.Sc. thesis"
