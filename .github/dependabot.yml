@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directories:
+      - /sns
+      - /topology_builder
+      - /traffic_matrix_generator
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      pip-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - /topology_builder
+      - /traffic_matrix_generator
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      docker-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns: ["*"]
