@@ -10,7 +10,7 @@ kiwisolver==1.4.5
 matplotlib==3.8.1
 networkx==3.2.1
 ns.py==0.3.7
-numpy==1.26.1
+numpy==2.5.4
 packaging==23.2
 Pillow==10.1.0
 pluggy==1.3.0
