@@ -19,7 +19,7 @@ packaging==26.3
 Pillow==13.0.0
 pyparsing==3.1.1
 python-dateutil==2.8.2
-requests==2.31.0
+requests==2.33.0
 sgp4==2.22
 six==1.16.0
 skyfield==1.46
