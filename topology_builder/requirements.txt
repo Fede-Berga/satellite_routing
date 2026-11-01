@@ -11,7 +11,7 @@ itsdangerous==2.1.2
 Jinja2==3.1.6
 jplephem==2.19
 kiwisolver==1.4.5
-MarkupSafe==2.1.3
+MarkupSafe==3.0.4
 matplotlib==3.8.0
 networkx==3.2.1
 numpy==1.26.1
