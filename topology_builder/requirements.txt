@@ -24,4 +24,4 @@ sgp4==2.22
 six==1.16.0
 skyfield==1.46
 urllib3==2.8.0
-Werkzeug==3.0.1
+Werkzeug==3.1.9
